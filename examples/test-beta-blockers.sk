@@ -1,0 +1,737 @@
+# Beta blockers + getters/download (DiSky 5.0.0-b1, 2026-10-18).
+#
+# Typed by a human in a text channel of the test guild (the bot ignores other bots). Every step runs
+# in its own try block and logs one console line prefixed by its feature tag. Look for "FAIL".
+# Every command destroys what it creates and restores what it modifies.
+#
+# Commands:
+#   !t-perms      [PERM]  role permissions set/add/remove/delete, member permissions (read-only),
+#                         effective permissions in a channel, allowed/denied overrides, reset
+#   !t-history    [HIST]  last / before / after messages, 150 messages, 0 refused, purge
+#   !t-embeds     [EMB]   several embeds on a message builder (set, add, delete), > 10 refused, V2 refused
+#   !t-error      [ERR]   `on disky exception`: uncaught error fires it, a caught one does not, no recursion
+#   !t-emotes     [EMOJ]  emote and sticker builders, validation errors
+#   !t-getters    [GET]   emoji / emote / reaction getters, sticker named, member of, boost date, hex color
+#   !t-download   [DL]    download an attachment to plugins/DiSky/test-downloads/ and re-upload it
+#
+# From a runner: `diskyErrorTest({_guild})` covers !t-error; !t-perms only reads {_guild} on its first line.
+#
+# Needs: Manage Roles, Manage Channels, Manage Messages, Read Message History, Create Expressions,
+# Manage Expressions, Send Messages, Embed Links, View Channel; two free static emote slots and one
+# free sticker slot.
+
+options:
+	bot: "test-bot"
+
+# ---------------------------------------------------------------- test-permissions
+on message receive seen by {@bot}:
+	set {_cmd} to discord content of event-message
+
+	if {_cmd} is "!t-perms":
+		set {_guild} to event-guild
+
+		# ------------------------------------------------------------ setup
+		try:
+			set {_rb} to a new role builder named "disky-perms-test" in {_guild}
+			await set {_r} to the build result of {_rb}
+			set {_cb} to a new text channel builder named "disky-perms-test" in {_guild}
+			await set {_c} to the build result of {_cb}
+			await set {_m} to discord owner of {_guild}
+			send "[PERM] PASS setup: role %discord id of {_r}%, channel %discord id of {_c}%, owner %discord id of {_m}%" to console
+		catch {_e::*}:
+			send "[PERM] FAIL setup: %{_e::*}%" to console
+			if {_r} is set:
+				destroy {_r}
+			if {_c} is set:
+				destroy {_c}
+			stop
+
+		# ------------------------------------------------------------ role permissions
+		try:
+			await set discord permissions of {_r} to send messages and embed links
+			wait 1 second
+			set {_p::*} to discord permissions of {_r}
+			if size of {_p::*} is 2:
+				send "[PERM] PASS role set: %{_p::*}%" to console
+			else:
+				send "[PERM] FAIL role set: expected 2 permissions, got %{_p::*}%" to console
+		catch {_e::*}:
+			send "[PERM] FAIL role set: %{_e::*}%" to console
+		try:
+			await add manage messages to discord permissions of {_r}
+			wait 1 second
+			set {_p::*} to discord permissions of {_r}
+			if {_p::*} contain manage messages:
+				send "[PERM] PASS role add: %{_p::*}%" to console
+			else:
+				send "[PERM] FAIL role add: manage messages missing from %{_p::*}%" to console
+		catch {_e::*}:
+			send "[PERM] FAIL role add: %{_e::*}%" to console
+		try:
+			await remove embed links from discord permissions of {_r}
+			wait 1 second
+			set {_p::*} to discord permissions of {_r}
+			if {_p::*} contain embed links:
+				send "[PERM] FAIL role remove: embed links still in %{_p::*}%" to console
+			else if size of {_p::*} is 2:
+				send "[PERM] PASS role remove: %{_p::*}%" to console
+			else:
+				send "[PERM] FAIL role remove: expected send messages + manage messages, got %{_p::*}%" to console
+		catch {_e::*}:
+			send "[PERM] FAIL role remove: %{_e::*}%" to console
+		try:
+			await delete discord permissions of {_r}
+			wait 1 second
+			set {_p::*} to discord permissions of {_r}
+			if size of {_p::*} is 0:
+				send "[PERM] PASS role delete: no permission left" to console
+			else:
+				send "[PERM] FAIL role delete: %{_p::*}% left" to console
+		catch {_e::*}:
+			send "[PERM] FAIL role delete: %{_e::*}%" to console
+		try:
+			set {_any} to {_r}
+			await set discord permissions of {_any} to view channel
+			wait 1 second
+			set {_p::*} to discord permissions of {_any}
+			send "[PERM] PASS role set through an untyped variable: %{_p::*}% (expect view channel)" to console
+		catch {_e::*}:
+			send "[PERM] FAIL role set through an untyped variable: %{_e::*}%" to console
+
+		# ------------------------------------------------------------ member permissions
+		try:
+			set {_p::*} to discord permissions of {_m}
+			if {_p::*} contain administrator:
+				send "[PERM] PASS member permissions (owner, %size of {_p::*}% permissions, administrator included)" to console
+			else:
+				send "[PERM] FAIL member permissions: owner without administrator: %{_p::*}%" to console
+		catch {_e::*}:
+			send "[PERM] FAIL member permissions: %{_e::*}%" to console
+		try:
+			set {_any} to {_m}
+			set discord permissions of {_any} to send messages
+		catch {_e::*}:
+			set {_refused} to true
+			send "[PERM] PASS member permissions refused: %{_e::*}%" to console
+		if {_refused} is not set:
+			send "[PERM] FAIL member permissions changed without an error" to console
+
+		# ------------------------------------------------------------ effective permissions in a channel
+		try:
+			set {_p::*} to discord permissions of {_m} in {_c}
+			send "[PERM] PASS owner in channel: %size of {_p::*}% permissions" to console
+			set {_p::*} to discord permissions of {_r} in {_c}
+			send "[PERM] PASS role in channel: %{_p::*}% (expect view channel, maybe more from @everyone)" to console
+		catch {_e::*}:
+			send "[PERM] FAIL effective permissions in channel: %{_e::*}%" to console
+
+		# ------------------------------------------------------------ overrides on the role
+		try:
+			set {_a::*} to allowed discord permissions of {_r} in {_c}
+			set {_d::*} to denied discord permissions of {_r} in {_c}
+			if (size of {_a::*}) + (size of {_d::*}) is 0:
+				send "[PERM] PASS no override yet" to console
+			else:
+				send "[PERM] FAIL no override yet: allowed %{_a::*}%, denied %{_d::*}%" to console
+		catch {_e::*}:
+			send "[PERM] FAIL read missing override: %{_e::*}%" to console
+		try:
+			await add send messages and embed links to allowed discord permissions of {_r} in {_c}
+			await add manage messages to denied discord permissions of {_r} in {_c}
+			wait 1 second
+			set {_a::*} to allowed discord permissions of {_r} in {_c}
+			set {_d::*} to denied discord permissions of {_r} in {_c}
+			if size of {_a::*} is 2:
+				if {_d::*} contain manage messages:
+					send "[PERM] PASS override add: allowed %{_a::*}%, denied %{_d::*}%" to console
+				else:
+					send "[PERM] FAIL override add: denied %{_d::*}%" to console
+			else:
+				send "[PERM] FAIL override add: allowed %{_a::*}%" to console
+		catch {_e::*}:
+			send "[PERM] FAIL override add: %{_e::*}%" to console
+		try:
+			set {_p::*} to discord permissions of {_r} in {_c}
+			if {_p::*} contain manage messages:
+				send "[PERM] FAIL effective after deny: manage messages still there: %{_p::*}%" to console
+			else if {_p::*} contain embed links:
+				send "[PERM] PASS effective after override: %{_p::*}%" to console
+			else:
+				send "[PERM] FAIL effective after override: embed links missing: %{_p::*}%" to console
+		catch {_e::*}:
+			send "[PERM] FAIL effective after override: %{_e::*}%" to console
+		try:
+			await add embed links to denied discord permissions of {_r} in {_c}
+			wait 1 second
+			set {_a::*} to allowed discord permissions of {_r} in {_c}
+			set {_d::*} to denied discord permissions of {_r} in {_c}
+			if {_a::*} contain embed links:
+				send "[PERM] FAIL deny moves from allowed: embed links still allowed (%{_a::*}%)" to console
+			else if {_d::*} contain embed links:
+				send "[PERM] PASS deny moves from allowed: allowed %{_a::*}%, denied %{_d::*}%" to console
+			else:
+				send "[PERM] FAIL deny moves from allowed: embed links neither allowed nor denied" to console
+		catch {_e::*}:
+			send "[PERM] FAIL deny moves from allowed: %{_e::*}%" to console
+		try:
+			await remove manage messages from denied discord permissions of {_r} in {_c}
+			wait 1 second
+			set {_a::*} to allowed discord permissions of {_r} in {_c}
+			set {_d::*} to denied discord permissions of {_r} in {_c}
+			if {_d::*} contain manage messages:
+				send "[PERM] FAIL override remove: manage messages still denied" to console
+			else if {_a::*} contain manage messages:
+				send "[PERM] FAIL override remove: manage messages became allowed" to console
+			else:
+				send "[PERM] PASS override remove (inherited again): allowed %{_a::*}%, denied %{_d::*}%" to console
+		catch {_e::*}:
+			send "[PERM] FAIL override remove: %{_e::*}%" to console
+		try:
+			await set allowed discord permissions of {_r} in {_c} to view channel
+			wait 1 second
+			set {_a::*} to allowed discord permissions of {_r} in {_c}
+			set {_d::*} to denied discord permissions of {_r} in {_c}
+			send "[PERM] PASS override set: allowed %{_a::*}% (expect view channel), denied %{_d::*}% (expect embed links)" to console
+		catch {_e::*}:
+			send "[PERM] FAIL override set: %{_e::*}%" to console
+		try:
+			await reset allowed discord permissions of {_r} in {_c}
+			wait 1 second
+			set {_a::*} to allowed discord permissions of {_r} in {_c}
+			set {_d::*} to denied discord permissions of {_r} in {_c}
+			if (size of {_a::*}) + (size of {_d::*}) is 0:
+				send "[PERM] PASS override reset (whole override removed)" to console
+			else:
+				send "[PERM] FAIL override reset: allowed %{_a::*}%, denied %{_d::*}%" to console
+		catch {_e::*}:
+			send "[PERM] FAIL override reset: %{_e::*}%" to console
+
+		# ------------------------------------------------------------ overrides on a member
+		try:
+			await add send messages to denied discord permissions of {_m} in {_c}
+			wait 1 second
+			set {_d::*} to denied discord permissions of {_m} in {_c}
+			send "[PERM] PASS member override: denied %{_d::*}% (expect send messages)" to console
+			await delete denied discord permissions of {_m} in {_c}
+			wait 1 second
+			set {_d::*} to denied discord permissions of {_m} in {_c}
+			if size of {_d::*} is 0:
+				send "[PERM] PASS member override delete" to console
+			else:
+				send "[PERM] FAIL member override delete: %{_d::*}% left" to console
+		catch {_e::*}:
+			send "[PERM] FAIL member override: %{_e::*}%" to console
+
+		# ------------------------------------------------------------ cleanup
+		try:
+			destroy {_c}
+			destroy {_r}
+			send "[PERM] PASS cleanup" to console
+		catch {_e::*}:
+			send "[PERM] FAIL cleanup (delete the 'disky-perms-test' role and channel by hand): %{_e::*}%" to console
+
+# ---------------------------------------------------------------- test-history-embeds
+on message receive seen by {@bot}:
+	set {_cmd} to discord content of event-message
+
+	# ---------------------------------------------------------------- history
+	if {_cmd} is "!t-history":
+		try:
+			set {_m} to a new message with content "[HIST] one" in event-channel
+			await set {_h1} to the build result of {_m}
+			set {_m} to a new message with content "[HIST] two" in event-channel
+			await set {_h2} to the build result of {_m}
+			set {_m} to a new message with content "[HIST] three" in event-channel
+			await set {_h3} to the build result of {_m}
+			send "[HIST] PASS posted 3 messages" to console
+		catch {_e::*}:
+			send "[HIST] FAIL post: %{_e::*}%" to console
+		try:
+			await set {_last::*} to the last 3 messages of event-channel
+			set {_got} to "%discord content of {_last::1}% | %discord content of {_last::2}% | %discord content of {_last::3}%"
+			if {_got} is "[HIST] three | [HIST] two | [HIST] one":
+				send "[HIST] PASS last 3 messages, newest first: %{_got}%" to console
+			else:
+				send "[HIST] FAIL last 3 messages: got '%{_got}%' (%size of {_last::*}% messages)" to console
+		catch {_e::*}:
+			send "[HIST] FAIL last 3 messages: %{_e::*}%" to console
+		try:
+			await set {_before::*} to the 2 messages before {_h3}
+			set {_got} to "%discord content of {_before::1}% | %discord content of {_before::2}%"
+			if {_got} is "[HIST] two | [HIST] one":
+				send "[HIST] PASS 2 messages before, closest first: %{_got}%" to console
+			else:
+				send "[HIST] FAIL 2 messages before: got '%{_got}%'" to console
+		catch {_e::*}:
+			send "[HIST] FAIL 2 messages before: %{_e::*}%" to console
+		try:
+			await set {_after::*} to the 2 discord messages after {_h1}
+			set {_got} to "%discord content of {_after::1}% | %discord content of {_after::2}%"
+			if {_got} is "[HIST] two | [HIST] three":
+				send "[HIST] PASS 2 messages after, closest first: %{_got}%" to console
+			else:
+				send "[HIST] FAIL 2 messages after: got '%{_got}%'" to console
+		catch {_e::*}:
+			send "[HIST] FAIL 2 messages after: %{_e::*}%" to console
+		try:
+			await set {_many::*} to the last 150 messages in the channel event-channel
+			if size of {_many::*} is 100:
+				send "[HIST] FAIL last 150: exactly 100 came back (the history did not page)" to console
+			else:
+				send "[HIST] PASS last 150: %size of {_many::*}% messages (150, or all of them if the channel has fewer)" to console
+		catch {_e::*}:
+			send "[HIST] FAIL last 150: %{_e::*}%" to console
+		delete {_e::*}
+		try:
+			await set {_none::*} to the last 0 messages of event-channel
+		catch {_e::*}:
+			send "[HIST] PASS amount 0 refused: %{_e::*}%" to console
+		if {_e::*} is not set:
+			send "[HIST] FAIL amount 0 accepted (%size of {_none::*}% messages)" to console
+		try:
+			purge {_h1}, {_h2} and {_h3}
+			send "[HIST] PASS purged the 3 test messages" to console
+		catch {_e::*}:
+			send "[HIST] FAIL purge: %{_e::*}%" to console
+
+	# ---------------------------------------------------------------- several embeds
+	if {_cmd} is "!t-embeds":
+		set {_e1} to a new discord embed
+		set description of {_e1} to "d1"
+		set {_e2} to a new discord embed
+		set description of {_e2} to "d2"
+		set {_e3} to a new discord embed
+		set description of {_e3} to "d3"
+		try:
+			set {_m} to a new message with content "[EMB] three embeds" in event-channel
+			set embeds of {_m} to {_e1} and {_e2}
+			add {_e3} to embeds of {_m}
+			await set {_sent} to the build result of {_m}
+			set {_got::*} to embeds of {_sent}
+			set {_first} to {_got::1}
+			set {_last} to {_got::3}
+			if size of {_got::*} is 3:
+				send "[EMB] PASS set 2 + add 1: 3 embeds sent (first '%description of {_first}%', last '%description of {_last}%', expect d1 / d3)" to console
+			else:
+				send "[EMB] FAIL set 2 + add 1: %size of {_got::*}% embeds on the sent message" to console
+			destroy {_sent}
+		catch {_e::*}:
+			send "[EMB] FAIL set 2 + add 1: %{_e::*}%" to console
+		try:
+			set {_m} to a new message with content "[EMB] one embed left" in event-channel
+			set embeds of {_m} to {_e1} and {_e2}
+			set embed of {_m} to {_e3}
+			await set {_sent} to the build result of {_m}
+			if size of embeds of {_sent} is 1:
+				send "[EMB] PASS singular embed replaces the list" to console
+			else:
+				send "[EMB] FAIL singular embed: %size of embeds of {_sent}% embeds" to console
+			destroy {_sent}
+		catch {_e::*}:
+			send "[EMB] FAIL singular embed: %{_e::*}%" to console
+		try:
+			set {_m} to a new message with content "[EMB] embeds deleted" in event-channel
+			set embeds of {_m} to {_e1}, {_e2} and {_e3}
+			delete embeds of {_m}
+			await set {_sent} to the build result of {_m}
+			if size of embeds of {_sent} is 0:
+				send "[EMB] PASS delete embeds empties the list" to console
+			else:
+				send "[EMB] FAIL delete embeds: %size of embeds of {_sent}% embeds left" to console
+			destroy {_sent}
+		catch {_e::*}:
+			send "[EMB] FAIL delete embeds: %{_e::*}%" to console
+		try:
+			set {_m} to a new message with content "[EMB] copied from a sent message" in event-channel
+			set embeds of {_m} to {_e1} and {_e2}
+			await set {_src} to the build result of {_m}
+			set {_m} to a new message with content "[EMB] copy" in event-channel
+			set embeds of {_m} to embeds of {_src}
+			await set {_sent} to the build result of {_m}
+			if size of embeds of {_sent} is 2:
+				send "[EMB] PASS embeds of a sent message reused on a builder" to console
+			else:
+				send "[EMB] FAIL reuse: %size of embeds of {_sent}% embeds" to console
+			destroy {_src}
+			destroy {_sent}
+		catch {_e::*}:
+			send "[EMB] FAIL reuse: %{_e::*}%" to console
+		loop 10 times:
+			add {_e1} to {_ten::*}
+		set {_eleven::*} to {_ten::*} and {_e2}
+		delete {_e::*}
+		try:
+			set {_m} to a new message with content "[EMB] never sent (11 embeds)" in event-channel
+			set embeds of {_m} to {_eleven::*}
+		catch {_e::*}:
+			send "[EMB] PASS set 11 embeds refused: %{_e::*}%" to console
+		if {_e::*} is not set:
+			send "[EMB] FAIL set 11 embeds accepted" to console
+		delete {_e::*}
+		try:
+			set {_m} to a new message with content "[EMB] never sent (10 + 1 embeds)" in event-channel
+			set embeds of {_m} to {_ten::*}
+			add {_e2} to embeds of {_m}
+		catch {_e::*}:
+			send "[EMB] PASS add an 11th embed refused: %{_e::*}%" to console
+		if {_e::*} is not set:
+			send "[EMB] FAIL add an 11th embed accepted" to console
+		delete {_e::*}
+		delete {_sent}
+		try:
+			set {_m} to a new message with content "x" in event-channel
+			set discord content of {_m} to ""
+			add (a new text display with text "v2") to components of {_m}
+			set embeds of {_m} to {_e1} and {_e2}
+			await set {_sent} to the build result of {_m}
+			if {_sent} is set:
+				send "[EMB] FAIL V2 + embeds was sent" to console
+				destroy {_sent}
+		catch {_e::*}:
+			send "[EMB] PASS V2 + embeds refused: %{_e::*}%" to console
+		if {_e::*} is not set:
+			send "[EMB] FAIL V2 + embeds: no error" to console
+
+# ---------------------------------------------------------------- test-error-event
+on disky exception:
+	{-disky::capture} is true
+	add 1 to {-disky::count}
+	set {-disky::lasterror} to event-discorderror
+	set {-disky::lasterror-location} to error location ? "<none>"
+	set {-disky::lasterror-bot} to event-bot ? "<none>"
+	cancel event
+	if {-disky::recurse} is set:
+		set {_r} to {-disky::recurse}
+		delete {-disky::recurse}
+		# Raised by this very trigger: must be printed, never dispatched to this event again.
+		destroy {_r}
+
+on message receive seen by {@bot}:
+	set {_cmd} to discord content of event-message
+	if {_cmd} is "!t-error":
+		diskyErrorTest(event-guild)
+
+function diskyErrorTest(g: guild):
+	set {-disky::capture} to true
+	delete {-disky::recurse}
+
+	# ---------------------------------------------------------------- uncaught: the event fires
+	set {-disky::count} to 0
+	delete {-disky::lasterror}
+	try:
+		set {_b} to a new role builder named "disky-error-test" in {_g}
+		await set {_r} to the build result of {_b}
+		destroy {_r}
+	catch {_e::*}:
+		send "[ERR] FAIL setup (create + destroy a role): %{_e::*}%" to console
+		delete {-disky::capture}
+		stop
+	# Already destroyed: Discord answers Unknown Role, and no try is around this line.
+	destroy {_r}
+	wait 2 seconds
+	if {-disky::lasterror} is set:
+		send "[ERR] PASS uncaught error fired the event: %{-disky::lasterror}% (code %error code of {-disky::lasterror}%) at %{-disky::lasterror-location}%" to console
+	else:
+		send "[ERR] FAIL uncaught error did not fire the event" to console
+	if {-disky::count} is 1:
+		send "[ERR] PASS the event fired once (count %{-disky::count}%)" to console
+	else:
+		send "[ERR] FAIL the event fired %{-disky::count}% times (expect 1)" to console
+	send "[ERR] info event-bot: %{-disky::lasterror-bot}% (the bot name from !t-error, <none> from a function called by a runner)" to console
+
+	# ---------------------------------------------------------------- caught: the event stays silent
+	set {-disky::count} to 0
+	delete {-disky::lasterror}
+	try:
+		destroy {_r}
+	catch {_e::*}:
+		set {_caught} to true
+		send "[ERR] PASS try caught it: %{_e::*}%" to console
+	if {_caught} is not set:
+		send "[ERR] FAIL caught case: destroying a destroyed role did not fail" to console
+	wait 2 seconds
+	if {-disky::lasterror} is set:
+		send "[ERR] FAIL the event fired for a caught error: %{-disky::lasterror}%" to console
+	else:
+		send "[ERR] PASS the event did not fire for a caught error" to console
+
+	# ---------------------------------------------------------------- recursion guard
+	set {-disky::count} to 0
+	delete {-disky::lasterror}
+	set {-disky::recurse} to {_r}
+	destroy {_r}
+	wait 3 seconds
+	if {-disky::count} is 1:
+		send "[ERR] PASS an error raised by the handler did not fire the event again (count 1; its error is printed above)" to console
+	else:
+		send "[ERR] FAIL the handler's own error fired the event: count %{-disky::count}% (expect 1)" to console
+
+	delete {-disky::capture}
+	delete {-disky::recurse}
+
+# ---------------------------------------------------------------- test-emotes-stickers
+on message receive seen by {@bot}:
+	set {_cmd} to discord content of event-message
+
+	if {_cmd} is "!t-emotes":
+		try:
+			set {_rb} to a new role builder named "DiSky emote role" in event-guild
+			await set {_role} to the build result of {_rb}
+			send "[EMOJ] PASS temporary role %discord id of {_role}%" to console
+		catch {_e::*}:
+			send "[EMOJ] FAIL temporary role: %{_e::*}%" to console
+		try:
+			set {_b} to a new emote builder named "disky_test" with image "https://cdn.discordapp.com/embed/avatars/0.png" in event-guild
+			set name of {_b} to "disky_test_url"
+			if {_role} is set:
+				add {_role} to allowed roles of {_b}
+			send "[EMOJ] builder: name=%name of {_b}% roles=%size of allowed roles of {_b}% (expect disky_test_url / 1)" to console
+			await set {_emote} to the built emote from {_b}
+			send "[EMOJ] PASS emote from url %{_emote}% name=%name of {_emote}% url=%emote image url of {_emote}%" to console
+		catch {_e::*}:
+			send "[EMOJ] FAIL emote from url: %{_e::*}%" to console
+		try:
+			set {_allowed::*} to allowed roles of {_emote}
+			if discord id of {_allowed::1} is discord id of {_role}:
+				send "[EMOJ] PASS emote restricted to %name of {_allowed::1}%" to console
+			else:
+				send "[EMOJ] FAIL emote allowed roles: %{_allowed::*}% (expect %name of {_role}%)" to console
+		catch {_e::*}:
+			send "[EMOJ] FAIL emote allowed roles: %{_e::*}%" to console
+		try:
+			set {_f} to a new file upload from url "https://cdn.discordapp.com/embed/avatars/1.png"
+			set {_b2} to a new emote builder named "disky_test_upload" with image {_f} in event-guild
+			await set {_emote2} to the build result of {_b2}
+			send "[EMOJ] PASS emote from file upload %{_emote2}% name=%name of {_emote2}%" to console
+		catch {_e::*}:
+			send "[EMOJ] FAIL emote from file upload: %{_e::*}%" to console
+		try:
+			set {_sb} to a new sticker builder named "DiSky test" with image "https://placehold.co/320x320/png" in event-guild
+			set description of {_sb} to "A DiSky test sticker"
+			add "robot" and "test" to sticker tags of {_sb}
+			remove "test" from sticker tags of {_sb}
+			add "disky" to sticker tags of {_sb}
+			send "[EMOJ] sticker builder: name=%name of {_sb}% description=%description of {_sb}% tags=%sticker tags of {_sb}% (expect robot and disky)" to console
+			await set {_sticker} to the built guildsticker from {_sb}
+			send "[EMOJ] PASS sticker %discord id of {_sticker}% name=%name of {_sticker}% description=%description of {_sticker}% tags=%sticker tags of {_sticker}%" to console
+		catch {_e::*}:
+			send "[EMOJ] FAIL sticker: %{_e::*}%" to console
+
+		delete {_e::*}
+		try:
+			set {_bad} to a new emote builder named "not valid!" with image "https://cdn.discordapp.com/embed/avatars/0.png" in event-guild
+			await set {_x} to the build result of {_bad}
+			if {_x} is set:
+				destroy {_x}
+		catch {_e::*}:
+			send "[EMOJ] PASS bad emote name refused: %{_e::*}%" to console
+		if {_e::*} is not set:
+			send "[EMOJ] FAIL bad emote name was accepted" to console
+		delete {_e::*}
+		try:
+			set {_bad} to a new sticker builder named "no tags" with file "https://placehold.co/320x320/png" in event-guild
+			await set {_x} to the build result of {_bad}
+			if {_x} is set:
+				destroy {_x}
+		catch {_e::*}:
+			send "[EMOJ] PASS sticker without tags refused: %{_e::*}%" to console
+		if {_e::*} is not set:
+			send "[EMOJ] FAIL sticker without tags was accepted" to console
+		delete {_e::*}
+		try:
+			set {_bad} to a new sticker builder named "jpeg sticker" with image "https://placehold.co/320x320/jpeg" in event-guild
+			add "jpeg" to sticker tags of {_bad}
+			await set {_x} to the build result of {_bad}
+			if {_x} is set:
+				destroy {_x}
+		catch {_e::*}:
+			send "[EMOJ] PASS JPEG sticker refused: %{_e::*}%" to console
+		if {_e::*} is not set:
+			send "[EMOJ] FAIL JPEG sticker was accepted" to console
+
+		try:
+			if {_emote} is set:
+				destroy {_emote}
+			if {_emote2} is set:
+				destroy {_emote2}
+			if {_sticker} is set:
+				destroy {_sticker}
+			if {_role} is set:
+				destroy {_role}
+			send "[EMOJ] PASS cleanup (emotes, sticker and role destroyed)" to console
+		catch {_e::*}:
+			send "[EMOJ] FAIL cleanup: %{_e::*}%" to console
+
+# ---------------------------------------------------------------- test-getters-download
+on message receive seen by {@bot}:
+	set {_cmd} to discord content of event-message
+
+	# ---------------------------------------------------------------- getters
+	if {_cmd} is "!t-getters":
+		try:
+			set {_e} to emoji "joy"
+			if "%{_e}%" is "😂":
+				send "[GET] PASS emoji ""joy"" = %{_e}%" to console
+			else:
+				send "[GET] FAIL emoji ""joy"": got '%{_e}%'" to console
+		catch {_e::*}:
+			send "[GET] FAIL emoji ""joy"": %{_e::*}%" to console
+		try:
+			set {_e} to reaction ":sparkles:"
+			if "%{_e}%" is "✨":
+				send "[GET] PASS reaction "":sparkles:"" = %{_e}%" to console
+			else:
+				send "[GET] FAIL reaction "":sparkles:"": got '%{_e}%'" to console
+		catch {_e::*}:
+			send "[GET] FAIL reaction "":sparkles:"": %{_e::*}%" to console
+		try:
+			set {_e} to emoji "thumbsup_tone2"
+			send "[GET] PASS skin tone shortcode = %{_e}% (expect a medium-light thumbs up)" to console
+		catch {_e::*}:
+			send "[GET] FAIL skin tone shortcode: %{_e::*}%" to console
+		try:
+			set {_e} to emoji "🔥"
+			if "%{_e}%" is "🔥":
+				send "[GET] PASS unicode literal = %{_e}%" to console
+			else:
+				send "[GET] FAIL unicode literal: got '%{_e}%'" to console
+		catch {_e::*}:
+			send "[GET] FAIL unicode literal: %{_e::*}%" to console
+		try:
+			set {_list::*} to emojis ("joy", "sparkles" and "🔥")
+			if size of {_list::*} is 3:
+				send "[GET] PASS plural emojis: %{_list::*}%" to console
+			else:
+				send "[GET] FAIL plural emojis: got %size of {_list::*}% (%{_list::*}%)" to console
+		catch {_e::*}:
+			send "[GET] FAIL plural emojis: %{_e::*}%" to console
+		try:
+			set {_bad} to emoji "definitely_not_an_emoji_xyz"
+		catch {_e::*}:
+			set {_badref} to true
+			send "[GET] PASS unknown emoji is an error: %{_e::*}%" to console
+		if {_badref} is not set:
+			send "[GET] FAIL unknown emoji: no error, got '%{_bad}%'" to console
+		try:
+			set {_emotes::*} to emojis of event-guild
+			if size of {_emotes::*} is 0:
+				send "[GET] PASS emote by name: skipped (the guild has no custom emoji)" to console
+			else:
+				set {_name} to name of {_emotes::1}
+				set {_byname} to emote "%{_name}%" in event-guild
+				set {_byid} to emote discord id of {_emotes::1}
+				if discord id of {_byname} is discord id of {_emotes::1}:
+					send "[GET] PASS emote by name '%{_name}%' = %{_byname}%, by id = %{_byid}%" to console
+				else:
+					send "[GET] FAIL emote by name '%{_name}%': got '%{_byname}%'" to console
+		catch {_e::*}:
+			send "[GET] FAIL emote by name: %{_e::*}%" to console
+		try:
+			set {_m} to a new message with content "getters reaction test" in event-channel
+			await set {_sent} to the build result of {_m}
+			react to {_sent} with emoji "joy"
+			react to {_sent} with emojis ("sparkles" and "thumbsup_tone2")
+			send "[GET] PASS react with emoji getter (check the message before it is deleted)" to console
+		catch {_e::*}:
+			send "[GET] FAIL react with emoji getter: %{_e::*}%" to console
+		wait 3 seconds
+		destroy {_sent}
+		try:
+			set {_stickers::*} to stickers of event-guild
+			if size of {_stickers::*} is 0:
+				send "[GET] PASS sticker named: skipped (the guild has no sticker)" to console
+			else:
+				set {_sname} to name of {_stickers::1}
+				set {_s} to sticker named "%{_sname}%" in event-guild
+				await set {_s2} to the sticker with name "%{_sname}%" from event-guild
+				if {_s} is set:
+					send "[GET] PASS sticker named '%{_sname}%' (cache: %discord id of {_s}%, await: %discord id of {_s2}%)" to console
+				else:
+					send "[GET] FAIL sticker named '%{_sname}%': nothing found" to console
+		catch {_e::*}:
+			send "[GET] FAIL sticker named: %{_e::*}%" to console
+		try:
+			set {_none} to sticker named "no_such_sticker_xyz" in event-guild
+			if {_none} is set:
+				send "[GET] FAIL unknown sticker: got %{_none}%" to console
+			else:
+				send "[GET] PASS unknown sticker is none" to console
+		catch {_e::*}:
+			send "[GET] FAIL unknown sticker: %{_e::*}%" to console
+		try:
+			set {_mem} to member of event-user in event-guild
+			if {_mem} is event-member:
+				send "[GET] PASS member of user (cache) = %{_mem}%" to console
+			else:
+				send "[GET] FAIL member of user (cache): got '%{_mem}%'" to console
+		catch {_e::*}:
+			send "[GET] FAIL member of user (cache): %{_e::*}%" to console
+		try:
+			await set {_mem2} to the member of event-user in guild event-guild
+			if {_mem2} is event-member:
+				send "[GET] PASS member of user (await) = %{_mem2}%" to console
+			else:
+				send "[GET] FAIL member of user (await): got '%{_mem2}%'" to console
+		catch {_e::*}:
+			send "[GET] FAIL member of user (await): %{_e::*}%" to console
+		try:
+			set {_boost} to boost date of event-member
+			send "[GET] PASS boost date read: '%{_boost}%' (none when not boosting)" to console
+		catch {_e::*}:
+			send "[GET] FAIL boost date: %{_e::*}%" to console
+		try:
+			set {_c} to color from hex code "#FF5733"
+			set {_c2} to colour from hex code "ff5733"
+			if hex code of {_c} is hex code of {_c2}:
+				send "[GET] PASS hex color (Skript core): %hex code of {_c}%" to console
+			else:
+				send "[GET] FAIL hex color: '%hex code of {_c}%' vs '%hex code of {_c2}%'" to console
+		catch {_e::*}:
+			send "[GET] FAIL hex color: %{_e::*}%" to console
+
+	# ---------------------------------------------------------------- download
+	if {_cmd} is "!t-download":
+		try:
+			set {_f} to a new file upload from url "https://raw.githubusercontent.com/SkriptLang/Skript/master/README.md" named "dl-test.md"
+			set {_m} to a new message with content "download test" in event-channel
+			add {_f} to attachments of {_m}
+			await set {_sent} to the build result of {_m}
+			set {_att} to first element of discord attachments of {_sent}
+			send "[DL] PASS sent (attachment '%file name of {_att}%')" to console
+		catch {_e::*}:
+			send "[DL] FAIL send: %{_e::*}%" to console
+		try:
+			download {_att} to folder "plugins/DiSky/test-downloads/"
+			send "[DL] PASS download to folder" to console
+		catch {_e::*}:
+			send "[DL] FAIL download to folder: %{_e::*}%" to console
+		try:
+			download attachment {_att} to file "plugins/DiSky/test-downloads/nested/renamed.md"
+			send "[DL] PASS download to file (nested folder created)" to console
+		catch {_e::*}:
+			send "[DL] FAIL download to file: %{_e::*}%" to console
+		try:
+			download {_att} in path "plugins/DiSky/test-downloads/"
+			send "[DL] PASS download again (overwrite)" to console
+		catch {_e::*}:
+			send "[DL] FAIL download again: %{_e::*}%" to console
+		try:
+			set {_back} to a new file upload from file "plugins/DiSky/test-downloads/dl-test.md"
+			set {_back2} to a new file upload from file "plugins/DiSky/test-downloads/nested/renamed.md"
+			set {_m2} to a new message with content "downloaded files re-uploaded" in event-channel
+			add {_back} and {_back2} to attachments of {_m2}
+			await set {_sent2} to the build result of {_m2}
+			set {_atts::*} to discord attachments of {_sent2}
+			if size of {_atts::*} is 2:
+				send "[DL] PASS files exist on disk (re-uploaded: %file name of {_atts::1}% and %file name of {_atts::2}%)" to console
+			else:
+				send "[DL] FAIL files on disk: %size of discord attachments of {_sent2}% attachment(s) re-uploaded" to console
+		catch {_e::*}:
+			send "[DL] FAIL files on disk: %{_e::*}%" to console
+		wait 2 seconds
+		try:
+			destroy {_sent}
+			destroy {_sent2}
+			send "[DL] PASS cleanup" to console
+		catch {_e::*}:
+			send "[DL] FAIL cleanup: %{_e::*}%" to console

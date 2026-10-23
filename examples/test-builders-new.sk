@@ -1,0 +1,155 @@
+# The builder types added in the 2026-08-27 pass. `test-builders.sk` covers the role builder and the
+# model itself; this file exercises the seven new ones.
+#
+# Same contract everywhere: `a new X builder ...` costs nothing, its properties are write-only (they
+# read back as <none>), and `the build result of` is the single line that talks to Discord - so it needs
+# `await`. Every `build result of` now goes through one dispatching expression, so an untyped variable
+# resolves by runtime type instead of binding to whichever builder registered first.
+
+# ---------------------------------------------------------------------------------------------
+# Channels
+# ---------------------------------------------------------------------------------------------
+
+on message receive seen by "test-bot":
+    if discord content of event-message is "!new-text-channel":
+        set {_b} to a new text channel builder named "apt-test" in event-guild
+        set topic of {_b} to "created from Skript"
+        set nsfw of {_b} to false
+        set slowmode of {_b} to 5
+        await set {_c} to the build result of {_b}
+        post "created %name of {_c}%" to event-channel
+
+    if discord content of event-message is "!new-voice-channel":
+        set {_b} to a new voice channel builder named "apt-voice" in event-guild
+        set bitrate of {_b} to 64000
+        set user limit of {_b} to 5
+        await set {_c} to the build result of {_b}
+
+    if discord content of event-message is "!new-category":
+        set {_b} to a new category builder named "apt-category" in event-guild
+        await set {_cat} to the build result of {_b}
+
+        # A category is what `category of` expects, so the two builders chain.
+        set {_b2} to a new text channel builder named "in-category" in event-guild
+        set category of {_b2} to {_cat}
+        set channel position of {_b2} to 1
+        await set {_c2} to the build result of {_b2}
+
+    if discord content of event-message is "!new-other-channels":
+        set {_news} to a new news channel builder named "apt-news" in event-guild
+        set {_stage} to a new stage-channel builder named "apt-stage" in event-guild
+        set {_forum} to a new forum channel builder named "apt-forum" in event-guild
+        set {_media} to a new media channel builder named "apt-media" in event-guild
+        await set {_a} to the build result of {_news}
+        await set {_b} to the build result of {_stage}
+        await set {_c} to the build result of {_forum}
+        await set {_d} to the build result of {_media}
+
+    if discord content of event-message is "!built-alias":
+        # The readable alias of `the build result of`, spelled with the produced entity.
+        set {_b} to a new text channel builder named "alias-test" in event-guild
+        await set {_c} to the built guildchannel from {_b}
+
+# ---------------------------------------------------------------------------------------------
+# Messages
+# ---------------------------------------------------------------------------------------------
+
+on message receive seen by "test-bot":
+    if discord content of event-message is "!new-message":
+        set {_m} to a new message with content "built, then sent" in event-channel
+        set tts of {_m} to false
+        set suppressed embeds of {_m} to false
+        set suppressed notifications of {_m} to true
+        await set {_sent} to the build result of {_m}
+        post "sent message id: %discord id of {_sent}%" to event-channel
+
+    if discord content of event-message is "!new-message-embed":
+        set {_e} to a new discord embed
+        set title of {_e} to "from a message builder"
+        set {_m} to a new message with embed {_e} in event-channel
+        await set {_sent} to the build result of {_m}
+
+    if discord content of event-message is "!new-message-reply":
+        set {_m} to a new message with content "this is a reply" in event-channel
+        set referenced message of {_m} to event-message
+        set mention replied user of {_m} to false
+        set fail on invalid reply of {_m} to false
+        await set {_sent} to the build result of {_m}
+
+    if discord content of event-message is "!message-content-union":
+        # `discord content` is one union: readable on a live message, write-only on the builder.
+        set {_m} to a new message with content "placeholder" in event-channel
+        set discord content of {_m} to "overwritten before sending"
+        await set {_sent} to the build result of {_m}
+        post "read back: %discord content of {_sent}%" to event-channel
+
+    if discord content of event-message is "!message-embed-converter":
+        # An embed read off a live message converts back into a builder.
+        set {_m} to a new message with content "x" in event-channel
+        set embed of {_m} to (first element of (embeds of event-message))
+        await set {_sent} to the build result of {_m}
+
+# ---------------------------------------------------------------------------------------------
+# Threads and forum posts
+# ---------------------------------------------------------------------------------------------
+
+on message receive seen by "test-bot":
+    if discord content of event-message is "!new-thread":
+        set {_b} to a new thread builder named "apt-thread" in event-channel
+        set auto archive duration of {_b} to 1440
+        set slowmode of {_b} to 10
+        await set {_t} to the build result of {_b}
+
+    if discord content of event-message is "!new-private-thread":
+        set {_b} to a new private thread builder named "apt-private" in event-channel
+        set invitable of {_b} to false
+        await set {_t} to the build result of {_b}
+
+    if discord content of event-message is "!new-thread-from-message":
+        set {_b} to a new thread builder named "apt-from-message" from event-message
+        await set {_t} to the build result of {_b}
+
+    if discord content of event-message is "!new-forum-post":
+        set {_forum} to forum channel with id "000000000000000000"
+        set {_b} to a new post builder named "apt-post" with message content "hello forum" in {_forum}
+        set auto archive duration of {_b} to 4320
+        await set {_t} to the build result of {_b}
+
+# ---------------------------------------------------------------------------------------------
+# Invites, scheduled events, webhooks
+# ---------------------------------------------------------------------------------------------
+
+on message receive seen by "test-bot":
+    if discord content of event-message is "!new-invite":
+        set {_b} to a new invite builder in event-channel
+        set invite max uses of {_b} to 1
+        set invite max age of {_b} to 3600
+        set invite temporary of {_b} to true
+        set invite unique of {_b} to true
+        await set {_i} to the build result of {_b}
+        post "invite: %invite url of {_i}%" to event-channel
+
+    if discord content of event-message is "!new-event-channel":
+        set {_vc} to voice channel with id "000000000000000000"
+        set {_b} to a new scheduled event builder named "apt-event" in {_vc} starting at (now + 1 hour)
+        set description of {_b} to "created from Skript"
+        await set {_e} to the build result of {_b}
+
+    if discord content of event-message is "!new-event-external":
+        set {_b} to a new scheduled-event builder named "apt-external" at "Somewhere" starting at (now + 1 hour) ending at (now + 2 hours) in event-guild
+        set description of {_b} to "external event"
+        await set {_e} to the build result of {_b}
+
+    if discord content of event-message is "!new-webhook":
+        set {_b} to a new webhook builder named "apt-webhook" in event-channel
+        await set {_w} to the build result of {_b}
+
+# ---------------------------------------------------------------------------------------------
+# Expected parse errors - these MUST NOT compile. Uncomment one at a time.
+# ---------------------------------------------------------------------------------------------
+
+#on message receive seen by "test-bot":
+#    if discord content of event-message is "!no-await":
+#        set {_b} to a new text channel builder named "nope" in event-guild
+#        # Expected: "building talks to Discord, so this requires 'await'"
+#        set {_c} to the build result of {_b}

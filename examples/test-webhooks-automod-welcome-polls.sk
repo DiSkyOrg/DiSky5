@@ -1,0 +1,504 @@
+# Webhooks, AutoMod rules, welcome screen, polls and converters (2026-10-05).
+#
+# One command per feature, typed by a human in a text channel of the test guild (the bot ignores
+# other bots). Every step runs in its own try block and logs one console line, prefixed by the
+# feature tag: [CONV], [POLL], [HOOK], [AMOD], [WELC]. Look for "FAIL" in the console.
+# Everything a command creates (messages, webhooks, threads, rules) is destroyed by that command.
+#
+# Commands:
+#   !t-conv           converters and comparators
+#   !t-poll           build and send polls (post, reply, message builder), read them back
+#   !t-poll-voters    vote on the poll sent by !t-poll first, then run this one; ends that poll
+#   !t-poll-errors    validation errors (bad duration, no answer, V2 + poll)
+#   !t-hook           webhook creation, client from URL, send/edit/delete, builder, thread, properties
+#   !t-amod           automod rule builder, triggers, responses, live rule edits, deletion
+#   !t-amod-limited   the one-per-guild triggers (preset, mention spam, spam, member profile)
+#   !t-welc           welcome screen read + write (the guild must be a community guild)
+#
+# Needs: the bot has Manage Server, Manage Webhooks, Manage Messages, Manage Threads.
+
+options:
+	bot: "test-bot"
+	role: "1335575588307734528"
+
+on message receive seen by {@bot}:
+	set {_cmd} to discord content of event-message
+
+	# ---------------------------------------------------------------- converters
+	if {_cmd} is "!t-conv":
+		try:
+			reply with event-member
+			send "[CONV] PASS member -> string (mention): sent" to console
+		catch {_e::*}:
+			send "[CONV] FAIL member -> string: %{_e::*}%" to console
+		try:
+			reply with event-channel
+			send "[CONV] PASS channel -> string (mention): sent" to console
+		catch {_e::*}:
+			send "[CONV] FAIL channel -> string: %{_e::*}%" to console
+		try:
+			reply with event-message
+			send "[CONV] PASS message -> string (raw content, expect '!t-conv'): sent" to console
+		catch {_e::*}:
+			send "[CONV] FAIL message -> string: %{_e::*}%" to console
+		try:
+			reply with event-guild
+			send "[CONV] PASS guild -> string (id, expect %discord id of event-guild%): sent" to console
+		catch {_e::*}:
+			send "[CONV] FAIL guild -> string: %{_e::*}%" to console
+		try:
+			set {_id} to discord id of event-bot
+			if {_id} is discord id of (self user of event-bot):
+				send "[CONV] PASS bot -> user (discord id of event-bot = %{_id}%)" to console
+			else:
+				send "[CONV] FAIL bot -> user: got '%{_id}%'" to console
+		catch {_e::*}:
+			send "[CONV] FAIL bot -> user: %{_e::*}%" to console
+		try:
+			set {_s} to "%event-guild%"
+			send "[CONV] PASS interpolation unaffected: '%{_s}%' (expect the guild name, not an id)" to console
+		catch {_e::*}:
+			send "[CONV] FAIL interpolation: %{_e::*}%" to console
+		if event-channel is text:
+			send "[CONV] PASS channel is text (comparator)" to console
+		else:
+			send "[CONV] FAIL channel is text: false (run this in a plain text channel)" to console
+		if event-channel is voice:
+			send "[CONV] FAIL channel is voice: true" to console
+		else:
+			send "[CONV] PASS channel is not voice" to console
+		if event-member is event-user:
+			send "[CONV] PASS member is user (comparator)" to console
+		else:
+			send "[CONV] FAIL member is user: false" to console
+
+	# ---------------------------------------------------------------- polls
+	if {_cmd} is "!t-poll":
+		try:
+			set {_p} to a new poll titled "DiSky test: favorite food?"
+			add "Pizza" and "Burger" to poll answer drafts of {_p}
+			add (a new poll answer with text "Sushi" with emoji "🍣") to poll answer drafts of {_p}
+			set poll duration of {_p} to 2 hours
+			set multi answer of {_p} to true
+			send "[POLL] builder: question='%poll question of {_p}%' answers=%size of poll answer drafts of {_p}% duration=%poll duration of {_p}% multi=%multi answer of {_p}%" to console
+			remove "Burger" from poll answer drafts of {_p}
+			send "[POLL] after remove: %size of poll answer drafts of {_p}% answers (expect 2)" to console
+			set {_d} to first element of poll answer drafts of {_p}
+			send "[POLL] PASS builder (first draft '%draft answer text of {_d}%')" to console
+		catch {_e::*}:
+			send "[POLL] FAIL builder: %{_e::*}%" to console
+		try:
+			set {_a} to a new poll answer with text "Tacos"
+			set draft answer emoji of {_a} to "🌮"
+			set draft answer text of {_a} to "Tacos!"
+			send "[POLL] PASS answer draft: '%draft answer text of {_a}%' emoji=%draft answer emoji of {_a}%" to console
+			add {_a} to poll answer drafts of {_p}
+		catch {_e::*}:
+			send "[POLL] FAIL answer draft: %{_e::*}%" to console
+		try:
+			post {_p} to event-channel
+			send "[POLL] PASS post poll (check the channel)" to console
+		catch {_e::*}:
+			send "[POLL] FAIL post poll: %{_e::*}%" to console
+		try:
+			reply with {_p}
+			send "[POLL] PASS reply with poll" to console
+		catch {_e::*}:
+			send "[POLL] FAIL reply with poll: %{_e::*}%" to console
+		try:
+			set {_m} to a new message with content "DiSky test: poll on a message builder" in event-channel
+			set attached poll of {_m} to {_p}
+			await set {_sent} to the build result of {_m}
+			set {-disky::poll} to {_sent}
+			send "[POLL] PASS message builder + attached poll (message %discord id of {_sent}%)" to console
+		catch {_e::*}:
+			send "[POLL] FAIL message builder + attached poll: %{_e::*}%" to console
+		try:
+			set {_poll} to poll of {_sent}
+			send "[POLL] read: question='%poll question of {_poll}%' multi=%multi answer of {_poll}% layout=%poll layout of {_poll}% expires=%poll expiration date of {_poll}%" to console
+			loop poll answers of {_poll}:
+				send "[POLL]   answer id=%answer id of loop-value% text='%answer text of loop-value%' emote=%answer emote of loop-value% votes=%answer votes of loop-value% self=%answer self voted of loop-value%" to console
+			send "[POLL] PASS read back %size of poll answers of {_poll}% answers (expect 3)" to console
+		catch {_e::*}:
+			send "[POLL] FAIL read back: %{_e::*}%" to console
+		reply with "Vote on the last poll, then type !t-poll-voters"
+
+	if {_cmd} is "!t-poll-voters":
+		try:
+			set {_sent} to {-disky::poll}
+			if {_sent} is not set:
+				send "[POLL] FAIL voters: run !t-poll first" to console
+				stop
+			await set {_v1::*} to the voters of poll answer 1 of {_sent}
+			send "[POLL] voters of answer 1 (by number): %size of {_v1::*}% (%{_v1::*}%)" to console
+			loop poll answers of (poll of {_sent}):
+				await set {_v::*} to the voters of poll answer loop-value of {_sent}
+				send "[POLL]   '%answer text of loop-value%': %size of {_v::*}% voter(s)" to console
+				delete {_v::*}
+			send "[POLL] PASS voters" to console
+		catch {_e::*}:
+			send "[POLL] FAIL voters: %{_e::*}%" to console
+		delete {_e::*}
+		try:
+			await set {_none::*} to the voters of poll answer 9 of {_sent}
+		catch {_e::*}:
+			send "[POLL] PASS voters of a missing answer errored: %{_e::*}%" to console
+		if {_e::*} is not set:
+			send "[POLL] FAIL voters of a missing answer did not error" to console
+		try:
+			end the poll of {_sent} now
+			send "[POLL] PASS end poll" to console
+		catch {_e::*}:
+			send "[POLL] FAIL end poll: %{_e::*}%" to console
+
+	if {_cmd} is "!t-poll-errors":
+		delete {_e::*}
+		try:
+			set {_p} to a new poll titled "too long"
+			add "a" to poll answer drafts of {_p}
+			set poll duration of {_p} to 10 days
+			post {_p} to event-channel
+		catch {_e::*}:
+			send "[POLL] PASS 10-day poll refused: %{_e::*}%" to console
+		if {_e::*} is not set:
+			send "[POLL] FAIL 10-day poll was sent" to console
+		delete {_e::*}
+		try:
+			set {_p} to a new poll titled "no answers"
+			post {_p} to event-channel
+		catch {_e::*}:
+			send "[POLL] PASS poll without answers refused: %{_e::*}%" to console
+		if {_e::*} is not set:
+			send "[POLL] FAIL poll without answers was sent" to console
+		try:
+			set {_p} to a new poll titled "with v2"
+			add "a" to poll answer drafts of {_p}
+			set {_m} to a new message with content "x" in event-channel
+			set discord content of {_m} to ""
+			add (a new text display with text "v2") to components of {_m}
+			set attached poll of {_m} to {_p}
+			await set {_sent} to the build result of {_m}
+			if {_sent} is set:
+				send "[POLL] FAIL V2 + poll was sent" to console
+				destroy {_sent}
+		catch {_e::*}:
+			send "[POLL] PASS V2 + poll refused: %{_e::*}%" to console
+
+	# ---------------------------------------------------------------- webhooks
+	if {_cmd} is "!t-hook":
+		try:
+			set {_wb} to a new webhook builder named "DiSky test hook" in event-channel
+			await set {_wh} to the build result of {_wb}
+			send "[HOOK] PASS create webhook %discord id of {_wh}% type=%webhook type of {_wh}% channel=%webhook channel of {_wh}%" to console
+		catch {_e::*}:
+			send "[HOOK] FAIL create webhook: %{_e::*}%" to console
+			stop
+		try:
+			send "[HOOK] props: name=%name of {_wh}% token length=%length of webhook token of {_wh}% avatar=%webhook avatar of {_wh}% created=%creation date of {_wh}% source guild=%webhook source guild id of {_wh}%" to console
+			send "[HOOK] PASS read props" to console
+		catch {_e::*}:
+			send "[HOOK] FAIL read props: %{_e::*}%" to console
+		try:
+			await set name of {_wh} to "DiSky renamed hook"
+			await set webhook avatar of {_wh} to "https://i.imgur.com/AfFp7pu.png"
+			send "[HOOK] PASS rename + avatar (check the webhook in channel settings)" to console
+		catch {_e::*}:
+			send "[HOOK] FAIL rename + avatar: %{_e::*}%" to console
+		try:
+			make {_wh} post "1/5 posted through the retrieved webhook"
+			send "[HOOK] PASS webhook post" to console
+		catch {_e::*}:
+			send "[HOOK] FAIL webhook post: %{_e::*}%" to console
+		try:
+			set {_client} to a new webhook client from url (webhook url of {_wh})
+			send "[HOOK] client from url: id=%discord id of {_client}% token length=%length of webhook token of {_client}%" to console
+			make webhook client {_client} send "2/5 posted through a client built from the URL" with username "DiSky Announcer" and avatar "https://i.imgur.com/AfFp7pu.png"
+			send "[HOOK] PASS client from url + overrides" to console
+		catch {_e::*}:
+			send "[HOOK] FAIL client from url: %{_e::*}%" to console
+		try:
+			set {_emb} to a new embed
+			set title of {_emb} to "3/5 embed through the client"
+			set description of {_emb} to "speak alias"
+			make {_client} speak {_emb}
+			send "[HOOK] PASS client embed" to console
+		catch {_e::*}:
+			send "[HOOK] FAIL client embed: %{_e::*}%" to console
+		try:
+			set {_m} to a new webhook message with content "4/5 built webhook message (will be edited)" through {_client}
+			set webhook username of {_m} to "DiSky Builder"
+			set webhook avatar url of {_m} to "https://i.imgur.com/AfFp7pu.png"
+			await set {_sent} to the build result of {_m}
+			send "[HOOK] PASS webhook message builder, sent %discord id of {_sent}%" to console
+		catch {_e::*}:
+			send "[HOOK] FAIL webhook message builder: %{_e::*}%" to console
+		try:
+			edit webhook message {_sent} of {_client} to show "4/5 edited through the client"
+			send "[HOOK] PASS edit webhook message (by message)" to console
+		catch {_e::*}:
+			send "[HOOK] FAIL edit webhook message: %{_e::*}%" to console
+		try:
+			set {_e2} to a new embed
+			set title of {_e2} to "5/5 built from an embed, deleted by id"
+			set {_m2} to a new webhook message with embed {_e2} for {_wh}
+			await set {_s2} to the built message from {_m2}
+			delete webhook message (discord id of {_s2}) of {_wh}
+			send "[HOOK] PASS embed builder + delete by id" to console
+		catch {_e::*}:
+			send "[HOOK] FAIL embed builder + delete by id: %{_e::*}%" to console
+		try:
+			set {_tb} to a new thread builder named "DiSky hook thread" from message event-message
+			await set {_thread} to the build result of {_tb}
+			set {_t} to a new webhook message with content "in thread" through {_wh}
+			set webhook thread of {_t} to {_thread}
+			await set {_ts} to the build result of {_t}
+			edit webhook message {_ts} of {_wh} to show "edited in thread" in thread {_thread}
+			make {_wh} post "posted in thread by the effect" in thread {_thread}
+			delete webhook message {_ts} of {_wh} in thread {_thread}
+			send "[HOOK] PASS thread send/edit/delete (thread left for review, deleted below)" to console
+		catch {_e::*}:
+			send "[HOOK] FAIL thread: %{_e::*}%" to console
+		try:
+			await set {_hooks::*} to channel webhooks of event-channel
+			send "[HOOK] PASS channel webhooks: %size of {_hooks::*}%" to console
+		catch {_e::*}:
+			send "[HOOK] FAIL channel webhooks: %{_e::*}%" to console
+		try:
+			delete webhook message {_sent} of {_client}
+			destroy {_wh}
+			if {_thread} is set:
+				destroy {_thread}
+			send "[HOOK] PASS cleanup (webhook, thread, built message destroyed)" to console
+		catch {_e::*}:
+			send "[HOOK] FAIL cleanup: %{_e::*}%" to console
+
+	# ---------------------------------------------------------------- automod
+	if {_cmd} is "!t-amod":
+		try:
+			await set {_before::*} to automod rules of event-guild
+			send "[AMOD] PASS rules before: %size of {_before::*}%" to console
+		catch {_e::*}:
+			send "[AMOD] FAIL automod rules of guild: %{_e::*}%" to console
+		try:
+			set {_r1} to a new automod response blocking the message with the custom message "blocked by DiSky test"
+			set {_r2} to a new automod response sending an alert to the channel event-channel
+			set {_r3} to a new automod response timing the member out for 1 minute
+			set {_r4} to a new automod response blocking the member interactions
+			send "[AMOD] responses: %response type of {_r1}% '%response message of {_r1}%' / %response type of {_r2}% %response channel of {_r2}% / %response type of {_r3}% %response timeout of {_r3}% / %response type of {_r4}%" to console
+			if response type of {_r3} is timeout:
+				send "[AMOD] PASS responses (enum comparison OK)" to console
+			else:
+				send "[AMOD] FAIL response type comparison" to console
+		catch {_e::*}:
+			send "[AMOD] FAIL responses: %{_e::*}%" to console
+		try:
+			set {_t} to a new automod keyword trigger with the keywords "zzdiskybad" and "*zzdiskyspoiler*"
+			add "zzdiskyother" to filtered keywords of {_t}
+			set allow list of {_t} to "zzdiskyok"
+			set filtered patterns of {_t} to "zz[.]disky"
+			send "[AMOD] PASS keyword trigger" to console
+		catch {_e::*}:
+			send "[AMOD] FAIL keyword trigger: %{_e::*}%" to console
+		try:
+			set {_b} to a new automod rule builder named "DiSky test" in event-guild for messages using {_t}
+			set automod responses of {_b} to {_r1} and {_r2}
+			add {_r3} to automod responses of {_b}
+			add role with id {@role} to exempt roles of {_b}
+			add event-channel to exempt channels of {_b}
+			set enabled of {_b} to true
+			await set {_rule} to the build result of {_b}
+			send "[AMOD] PASS build rule %discord id of {_rule}%" to console
+		catch {_e::*}:
+			send "[AMOD] FAIL build rule: %{_e::*}%" to console
+			stop
+		try:
+			send "[AMOD] rule: name='%name of {_rule}%' trigger=%automod trigger type of {_rule}% event=%automod event type of {_rule}% enabled=%enabled of {_rule}% creator=%creator of {_rule}% creator id=%creator id of {_rule}% guild=%guild of {_rule}% created=%creation date of {_rule}%" to console
+			send "[AMOD] rule: keywords=%filtered keywords of {_rule}% patterns=%filtered patterns of {_rule}% allow=%allow list of {_rule}% roles=%exempt roles of {_rule}% channels=%exempt channels of {_rule}% responses=%size of automod responses of {_rule}%" to console
+			send "[AMOD] PASS read rule" to console
+		catch {_e::*}:
+			send "[AMOD] FAIL read rule: %{_e::*}%" to console
+		try:
+			await set {_again} to automod rule with id (discord id of {_rule}) in event-guild
+			send "[AMOD] PASS getter by id: '%name of {_again}%'" to console
+		catch {_e::*}:
+			send "[AMOD] FAIL getter by id: %{_e::*}%" to console
+		try:
+			await set name of {_rule} to "DiSky test renamed"
+			await set enabled of {_rule} to false
+			send "[AMOD] PASS rename + disable" to console
+		catch {_e::*}:
+			send "[AMOD] FAIL rename + disable: %{_e::*}%" to console
+		try:
+			set {_t2} to a new automod keyword trigger with the keywords "zzdiskynew"
+			await set trigger config of {_rule} to {_t2}
+			await remove role with id {@role} from exempt roles of {_rule}
+			await set automod responses of {_rule} to {_r1}
+			await set {_fresh} to automod rule with id (discord id of {_rule}) in event-guild
+			# one add with two values: both must land (a block member interaction response is only
+			# valid on a member profile rule, so it is not used here)
+			await add {_r2} and {_r3} to automod responses of {_fresh}
+			await set {_fresh} to automod rule with id (discord id of {_rule}) in event-guild
+			send "[AMOD] after edits: name='%name of {_fresh}%' enabled=%enabled of {_fresh}% keywords=%filtered keywords of {_fresh}% roles=%size of exempt roles of {_fresh}% responses=%size of automod responses of {_fresh}% (expect renamed / false / zzdiskynew / 0 / 3)" to console
+			send "[AMOD] PASS live edits" to console
+		catch {_e::*}:
+			send "[AMOD] FAIL live edits: %{_e::*}%" to console
+		try:
+			set {_pt} to a new automod pattern trigger with the regex patterns "zz[0-9]+disky"
+			set {_b2} to a new automod rule builder named "DiSky test regex" in event-guild for messages using {_pt}
+			set automod responses of {_b2} to {_r1}
+			await set {_rule2} to the build result of {_b2}
+			send "[AMOD] PASS regex rule %discord id of {_rule2}% patterns=%filtered patterns of {_rule2}%" to console
+		catch {_e::*}:
+			send "[AMOD] FAIL regex rule: %{_e::*}%" to console
+		delete {_e::*}
+		try:
+			set {_bad} to a new automod mention spam trigger with a limit of 5
+			set filtered keywords of {_bad} to "x"
+		catch {_e::*}:
+			send "[AMOD] PASS keywords on a mention trigger refused: %{_e::*}%" to console
+		if {_e::*} is not set:
+			send "[AMOD] FAIL keywords on a mention trigger accepted" to console
+		try:
+			destroy {_rule}
+			if {_rule2} is set:
+				destroy {_rule2}
+			await set {_after::*} to automod rules of event-guild
+			send "[AMOD] PASS cleanup, rules after: %size of {_after::*}% (expect %size of {_before::*}%)" to console
+		catch {_e::*}:
+			send "[AMOD] FAIL cleanup: %{_e::*}%" to console
+
+	if {_cmd} is "!t-amod-limited":
+		# Discord allows one rule per guild for each of these triggers, and a community guild cannot
+		# delete its mention spam rule. An existing rule is therefore edited and restored instead of
+		# created; a missing one is created, then destroyed (or left in place for mention spam).
+		set {_block} to a new automod response blocking the message
+		try:
+			await set {_rules::*} to automod rules of event-guild
+			loop {_rules::*}:
+				set {_kind} to automod trigger type of loop-value
+				if {_kind} is keyword preset:
+					set {_preset} to loop-value
+				else if {_kind} is mention spam:
+					set {_mention} to loop-value
+				else if {_kind} is spam:
+					set {_spam} to loop-value
+				if automod event type of loop-value is member update:
+					set {_profile} to loop-value
+			send "[AMOD] existing: preset=%{_preset}% mention=%{_mention}% spam=%{_spam}% profile=%{_profile}%" to console
+		catch {_e::*}:
+			send "[AMOD] FAIL list rules: %{_e::*}%" to console
+			stop
+
+		try:
+			set {_t} to a new automod preset trigger with the presets profanity and slurs
+			add sexual content to presets of {_t}
+			remove slurs from presets of {_t}
+			set allow list of {_t} to "zzdiskyok"
+			if {_preset} is set:
+				set {_oldpresets::*} to presets of {_preset}
+				set {_oldallow::*} to allow list of {_preset}
+				await set trigger config of {_preset} to {_t}
+				await set {_r} to automod rule with id (discord id of {_preset}) in event-guild
+				send "[AMOD] PASS preset rule edited: presets=%presets of {_r}% allow=%allow list of {_r}% (expect profanity, sexual content / zzdiskyok)" to console
+				set {_back} to a new automod preset trigger with the presets {_oldpresets::*}
+				set allow list of {_back} to {_oldallow::*}
+				await set trigger config of {_preset} to {_back}
+				send "[AMOD] PASS preset rule restored" to console
+			else:
+				set {_b} to a new automod rule builder named "DiSky preset" in event-guild for messages using {_t}
+				set automod responses of {_b} to {_block}
+				await set {_r} to the build result of {_b}
+				send "[AMOD] PASS preset rule created: presets=%presets of {_r}% allow=%allow list of {_r}% (expect profanity, sexual content / zzdiskyok)" to console
+				destroy {_r}
+		catch {_e::*}:
+			send "[AMOD] FAIL preset rule: %{_e::*}%" to console
+
+		try:
+			set {_t} to a new automod mention spam trigger with a limit of 5
+			set mention limit of {_t} to 7
+			set mention raid protection of {_t} to true
+			if {_mention} is set:
+				set {_oldlimit} to mention limit of {_mention}
+				set {_oldraid} to mention raid protection of {_mention}
+				await set trigger config of {_mention} to {_t}
+				await set {_r} to automod rule with id (discord id of {_mention}) in event-guild
+				send "[AMOD] PASS mention spam rule edited: limit=%mention limit of {_r}% raid=%mention raid protection of {_r}% (expect 7 / true)" to console
+				set {_back} to a new automod mention spam trigger with a limit of {_oldlimit}
+				set mention raid protection of {_back} to {_oldraid}
+				await set trigger config of {_mention} to {_back}
+				send "[AMOD] PASS mention spam rule restored (limit %{_oldlimit}%, raid %{_oldraid}%)" to console
+			else:
+				set {_b} to a new automod rule builder named "DiSky mentions" in event-guild for messages using {_t}
+				set automod responses of {_b} to {_block}
+				await set {_r} to the build result of {_b}
+				send "[AMOD] PASS mention spam rule created: limit=%mention limit of {_r}% raid=%mention raid protection of {_r}% (expect 7 / true; left in place)" to console
+		catch {_e::*}:
+			send "[AMOD] FAIL mention spam rule: %{_e::*}%" to console
+
+		try:
+			if {_spam} is set:
+				send "[AMOD] PASS spam rule already present: '%name of {_spam}%' trigger=%automod trigger type of {_spam}% (creation not tested)" to console
+			else:
+				set {_b} to a new automod rule builder named "DiSky spam" in event-guild for messages using (a new automod spam trigger)
+				set automod responses of {_b} to {_block}
+				await set {_r} to the build result of {_b}
+				send "[AMOD] PASS spam rule created: trigger=%automod trigger type of {_r}%" to console
+				destroy {_r}
+		catch {_e::*}:
+			send "[AMOD] FAIL spam rule: %{_e::*}%" to console
+
+		try:
+			if {_profile} is set:
+				send "[AMOD] PASS member profile rule already present: '%name of {_profile}%' event=%automod event type of {_profile}% (creation not tested)" to console
+			else:
+				set {_t} to a new automod keyword trigger with the keywords "zzdiskyprofile"
+				set {_b} to a new automod rule builder named "DiSky profile" in event-guild for member profiles using {_t}
+				await set {_r} to the build result of {_b}
+				send "[AMOD] PASS member profile rule created: event=%automod event type of {_r}% responses=%size of automod responses of {_r}% (expect member update / 1)" to console
+				destroy {_r}
+		catch {_e::*}:
+			send "[AMOD] FAIL member profile rule: %{_e::*}%" to console
+
+	# ---------------------------------------------------------------- welcome screen
+	if {_cmd} is "!t-welc":
+		try:
+			await set {_old} to the welcome screen of event-guild
+			send "[WELC] PASS read: description='%description of {_old}%' channels=%size of welcome channels of {_old}% guild=%guild of {_old}%" to console
+			loop welcome channels of {_old}:
+				send "[WELC]   %welcome channel of loop-value% '%description of loop-value%' %emoji of loop-value%" to console
+		catch {_e::*}:
+			send "[WELC] FAIL read (is the guild a community guild?): %{_e::*}%" to console
+			stop
+		loop text channels of event-guild:
+			if loop-value is not event-channel:
+				set {_other} to loop-value
+				exit loop
+		try:
+			set {_e1} to a new welcome channel for event-channel with description "DiSky test channel" with emoji "📜"
+			set {_e2} to a new welcome channel for {_other} and description "No emoji"
+			send "[WELC] entries: %welcome channel of {_e1}% '%description of {_e1}%' %emoji of {_e1}% / '%description of {_e2}%' emoji=%emoji of {_e2}% (expect none)" to console
+			send "[WELC] PASS new welcome channel" to console
+		catch {_e::*}:
+			send "[WELC] FAIL new welcome channel: %{_e::*}%" to console
+		try:
+			set {_b} to a new welcome screen builder for event-guild
+			set welcome screen enabled of {_b} to true
+			set description of {_b} to "DiSky test welcome screen"
+			set welcome channels of {_b} to {_e1}
+			add {_e2} to welcome channels of {_b}
+			remove {_e1} from welcome channels of {_b}
+			add {_e1} to welcome channels of {_b}
+			update the welcome screen using {_b}
+			await set {_new} to the welcome screen of event-guild
+			send "[WELC] after update: description='%description of {_new}%' channels=%size of welcome channels of {_new}% first=%welcome channel of first element of welcome channels of {_new}% (expect DiSky test welcome screen / 2 / %{_other}%)" to console
+			send "[WELC] PASS update" to console
+		catch {_e::*}:
+			send "[WELC] FAIL update: %{_e::*}%" to console
+		try:
+			set {_restore} to a new welcome screen builder for event-guild
+			set description of {_restore} to description of {_old}
+			set welcome channels of {_restore} to welcome channels of {_old}
+			update the welcome screen using {_restore}
+			send "[WELC] PASS restored the previous description and channels" to console
+		catch {_e::*}:
+			send "[WELC] FAIL restore: %{_e::*}%" to console

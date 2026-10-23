@@ -1,0 +1,97 @@
+# Retrieve properties added in the 2026-08-27 pass (@Property.Retrieve).
+#
+# These replace V4's `retrieve X ... and store it in %objects%` effects. They are pure-REST: reading
+# one WITHOUT `await` is a parse error, not a silent empty list. Each block prints a size or a value
+# so a wrong mapping shows up as <none> / 0 rather than passing silently.
+
+# ---------------------------------------------------------------------------------------------
+# Guild
+# ---------------------------------------------------------------------------------------------
+
+on message receive seen by "test-bot":
+    if discord content of event-message is "!guild-retrieves":
+        await set {_bans::*} to bans of event-guild
+        post "bans: %size of {_bans::*}%" to event-channel
+
+        await set {_emotes::*} to emotes of event-guild
+        post "emotes: %size of {_emotes::*}%" to event-channel
+
+        await set {_stickers::*} to stickers of event-guild
+        post "stickers: %size of {_stickers::*}%" to event-channel
+
+        await set {_logs::*} to audit logs of event-guild
+        post "audit entries: %size of {_logs::*}%" to event-channel
+
+        await set {_threads::*} to active threads of event-guild
+        post "active threads: %size of {_threads::*}%" to event-channel
+
+    if discord content of event-message is "!guild-owner":
+        # `discord owner` has both a cache read and a retrieve, so it works with and without await.
+        set {_cached} to discord owner of event-guild
+        await set {_fresh} to discord owner of event-guild
+        post "owner: %name of {_cached}% / %name of {_fresh}%" to event-channel
+
+    if discord content of event-message is "!guild-existing":
+        # Already present before this pass - included to catch a regression.
+        await set {_invites::*} to invites of event-guild
+        await set {_hooks::*} to webhooks of event-guild
+        await set {_members::*} to members of event-guild
+        post "invites %size of {_invites::*}%, webhooks %size of {_hooks::*}%, members %size of {_members::*}%" to event-channel
+
+# ---------------------------------------------------------------------------------------------
+# Channels
+# ---------------------------------------------------------------------------------------------
+
+on message receive seen by "test-bot":
+    if discord content of event-message is "!channel-retrieves":
+        await set {_pins::*} to pinned messages of event-channel
+        post "pinned: %size of {_pins::*}%" to event-channel
+
+        # Guild text/news channels only (an IWebhookContainer); named `channel webhooks` because
+        # `webhooks` is already the guild's.
+        await set {_hooks::*} to channel webhooks of event-channel
+        post "channel webhooks: %size of {_hooks::*}%" to event-channel
+
+        await set {_archived::*} to archived threads of event-channel
+        await set {_private::*} to archived private threads of event-channel
+        post "archived %size of {_archived::*}%, private %size of {_private::*}%" to event-channel
+
+# ---------------------------------------------------------------------------------------------
+# Threads, events, bot, user
+# ---------------------------------------------------------------------------------------------
+
+on message receive seen by "test-bot":
+    if discord content of event-message is "!thread-retrieves":
+        set {_b} to a new thread builder named "retrieve-test" in event-channel
+        await set {_t} to the build result of {_b}
+
+        await set {_members::*} to thread members of {_t}
+        post "thread members: %size of {_members::*}%" to event-channel
+
+        await set {_start} to start message of {_t}
+        post "start message: %discord content of {_start}%" to event-channel
+
+    if discord content of event-message is "!event-retrieves":
+        set {_e} to scheduled event with id "000000000000000000" in event-guild
+        await set {_interested::*} to interested members of {_e}
+        post "interested: %size of {_interested::*}%" to event-channel
+
+    if discord content of event-message is "!bot-retrieves":
+        await set {_info} to application info of event-bot
+        post "application: %name of {_info}%" to event-channel
+
+    if discord content of event-message is "!user-retrieves":
+        await set {_dm} to private channel of event-user
+        post "opened dm %discord id of {_dm}%" to event-channel
+
+        # Already present before this pass.
+        await set {_profile} to profile of event-user
+
+# ---------------------------------------------------------------------------------------------
+# Expected parse errors - these MUST NOT compile. Uncomment one at a time.
+# ---------------------------------------------------------------------------------------------
+
+#on message receive seen by "test-bot":
+#    if discord content of event-message is "!no-await-retrieve":
+#        # Expected: a parse error saying the read requires 'await'
+#        set {_bans::*} to bans of event-guild

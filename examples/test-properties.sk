@@ -1,0 +1,267 @@
+# ============================================================================
+#  DiSky V5 — property PARSE + RUNTIME test
+#
+#  HOW TO USE
+#  1. Put your Discord bot token in the `define bot` below (token: "...").
+#  2. Copy this file into  plugins/Skript/scripts/  on a Paper server that has
+#     Skript 2.15.2 + the DiSky5 plugin jar.
+#  3. /sk reload test-properties   (or restart). If every property registered
+#     correctly, the script LOADS WITH NO PARSE ERRORS — that alone tests the
+#     parsing of every property referenced below.
+#  4. Once the bot is connected (watch the console), run  /diskytest  in the
+#     CONSOLE (or in-game) to print live values — that tests them at runtime.
+#
+#  COVERAGE: every migrated entity type and its properties. Cross-cutting
+#  properties are now implemented and tested too:
+#    - discord id / creation date   -> on every entity (ISnowflake base type)
+#    - mention tag                  -> users / members / roles / channels / emotes
+#    - avatar url / guild           -> shared, co-owned across types
+#  `name` (shared) is co-owned on Skript's native Property.NAME.
+# ============================================================================
+
+define bot named "test-bot":
+    token: "PUT-YOUR-BOT-TOKEN-HERE"
+    intents: default intents
+
+# Lifecycle is a global event in V5, no longer a section of 'define bot'.
+on ready seen by "test-bot":
+    send "[DiSky] &aConnected as %name of event-bot% - ping %gateway ping of event-bot%ms, %number of (guilds of event-bot)% guild(s)." to console
+
+on guild ready seen by "test-bot":
+    send "[DiSky] &aGuild ready: %name of event-guild% (%member count of event-guild% members)." to console
+
+
+command /diskytest:
+    description: "Read a broad set of DiSky V5 properties (runtime test)."
+    trigger:
+        set {_bot} to the bot named "test-bot"
+        if {_bot} is not set:
+            send "&cBot 'test-bot' is not loaded yet — wait for it to connect, then retry."
+            stop
+
+        send "&e===== BOT ====="
+        send "name: &7%name of {_bot}%"
+        send "avatar url: &7%avatar url of {_bot}%"
+        send "online status: &7%online status of {_bot}%"
+        send "gateway ping: &7%gateway ping of {_bot}%ms"
+        send "guild count: &7%guild count of {_bot}%  (running shards: %running shards of {_bot}%)"
+
+        # --- self user (a User) ---
+        set {_self} to self user of {_bot}
+        send "&e===== SELF USER ====="
+        send "discord id: &7%discord id of {_self}%"
+        send "creation date: &7%creation date of {_self}%"
+        send "mention tag: &7%mention tag of {_self}%"
+        send "avatar url: &7%avatar url of {_self}%"
+        send "discriminator: &7%discriminator of {_self}%"
+        send "badges: &7%badges of {_self}%"
+        send "mutual guilds: &7%number of (mutual guilds of {_self})%"
+        send "primary guild tag: &7%primary guild tag of {_self}%  (icon: %primary guild tag icon of {_self}%)"
+        # `profile` is a REST-only property (@Property.Retrieve) -> needs `await`:
+        await set {_profile} to profile of {_self}
+        if {_profile} is set:
+            send "profile banner: &7%profile banner of {_profile}%"
+            send "profile color: &7%profile color of {_profile}%"
+
+        # --- guild ---
+        set {_g} to first element of (guilds of {_bot})
+        if {_g} is not set:
+            send "&cThe bot is in no guild; skipping guild/member/channel tests."
+            stop
+        send "&e===== GUILD ====="
+        send "discord id: &7%discord id of {_g}%  (created %creation date of {_g}%)"
+        send "name: &7%name of {_g}%"
+        send "avatar url: &7%avatar url of {_g}%"
+        send "member count: &7%member count of {_g}%"
+        send "boost count: &7%boost count of {_g}%  (tier: %boost tier of {_g}%)"
+        send "boost role: &7%boost role of {_g}%"
+        send "bot role: &7%bot role of {_g}%"
+        send "everyone role: &7%everyone role of {_g}%"
+        send "afk channel: &7%afk channel of {_g}%  (timeout: %afk timeout of {_g}%s)"
+        send "banner: &7%banner of {_g}%"
+        send "verification level: &7%verification level of {_g}%"
+        send "text channels: &7%number of (text channels of {_g})%"
+        send "voice channels: &7%number of (voice channels of {_g})%"
+        send "news channels: &7%number of (news channels of {_g})%"
+        send "stage channels: &7%number of (stage channels of {_g})%"
+        send "categories: &7%number of (categories of {_g})%"
+        send "guild channels: &7%number of (guild channels of {_g})%"
+        send "roles: &7%number of (roles of {_g})%"
+        send "emojis: &7%number of (emojis of {_g})%"
+        send "stickers: &7%number of (stickers of {_g})%"
+        send "boosters: &7%number of (boosters of {_g})%"
+        send "scheduled events: &7%number of (scheduled events of {_g})%"
+        send "members (cached): &7%number of (members of {_g})%"
+        # online-only (@Property.Retrieve) guild collections — need `await`:
+        await set {_invites::*} to invites of {_g}
+        send "invites (online): &7%number of {_invites::*}%"
+        await set {_webhooks::*} to webhooks of {_g}
+        send "webhooks (online): &7%number of {_webhooks::*}%"
+
+        # --- member (first cached member) ---
+        set {_m} to first element of (members of {_g})
+        if {_m} is set:
+            send "&e===== MEMBER ====="
+            send "discord id: &7%discord id of {_m}%  (created %creation date of {_m}%)"
+            send "name: &7%name of {_m}%"
+            send "mention tag: &7%mention tag of {_m}%"
+            send "avatar url: &7%avatar url of {_m}%"
+            send "guild: &7%name of (guild of {_m})%"
+            send "effective name: &7%effective name of {_m}%"
+            send "nickname: &7%nickname of {_m}%"
+            send "join date: &7%join date of {_m}%"
+            send "boost date: &7%boost date of {_m}%"
+            send "roles: &7%number of (roles of {_m})%"
+            send "flags: &7%flags of {_m}%"
+            send "colors: &7%colors of {_m}%"
+            send "activities: &7%number of (activities of {_m})%"
+            send "voice channel: &7%voice channel of {_m}%"
+            send "online status: &7%online status of {_m}%"
+
+            # --- role (first role of that member) ---
+            set {_r} to first element of (roles of {_m})
+            if {_r} is set:
+                send "&e===== ROLE ====="
+                send "discord id: &7%discord id of {_r}%"
+                send "name: &7%name of {_r}%"
+                send "mention tag: &7%mention tag of {_r}%"
+                send "guild: &7%name of (guild of {_r})%"
+                send "color: &7%color of {_r}%"
+                send "role position: &7%role position of {_r}%"
+                # role colors -> a RoleColors (rolecolor type) with primary/secondary/tertiary
+                set {_rc} to role colors of {_r}
+                if {_rc} is set:
+                    send "role colors: primary=%primary color of {_rc}% secondary=%secondary color of {_rc}% tertiary=%tertiary color of {_rc}%"
+
+            # --- activity (first activity of that member) ---
+            set {_act} to first element of (activities of {_m})
+            if {_act} is set:
+                send "&e===== ACTIVITY ====="
+                send "text=%activity text of {_act}% type=%activity type of {_act}% state=%activity state of {_act}%"
+                send "details=%activity details of {_act}% url=%activity url of {_act}% emote=%activity emote of {_act}%"
+                send "images: large=%activity large image of {_act}% (%activity large text of {_act}%) small=%activity small image of {_act}% (%activity small text of {_act}%)"
+                send "times: start=%activity start of {_act}% end=%activity end of {_act}%  party: %activity party size of {_act}%/%activity party max size of {_act}%"
+
+        # --- custom emoji (first guild emoji) ---
+        set {_emo} to first element of (emojis of {_g})
+        if {_emo} is set:
+            send "&e===== EMOTE ====="
+            send "name=%name of {_emo}% id=%discord id of {_emo}% mention=%mention tag of {_emo}% image=%emote image url of {_emo}%"
+
+        # --- sticker (first guild sticker) ---
+        set {_st} to first element of (stickers of {_g})
+        if {_st} is set:
+            send "&e===== STICKER ====="
+            send "name=%name of {_st}% id=%discord id of {_st}% image=%avatar url of {_st}% guild=%name of (guild of {_st})%"
+
+        # --- scheduled event (first one) ---
+        set {_se} to first element of (scheduled events of {_g})
+        if {_se} is set:
+            send "&e===== SCHEDULED EVENT ====="
+            send "name=%name of {_se}% type=%event type of {_se}% status=%event status of {_se}%"
+            send "description=%description of {_se}% location=%location of {_se}%"
+            send "start=%start date of {_se}% end=%end date of {_se}% cover=%cover of {_se}%"
+            send "channel=%event channel of {_se}% creator=%creator of {_se}% guild=%name of (guild of {_se})%"
+
+        # --- webhook (first online webhook, if any) ---
+        set {_wh} to first element of {_webhooks::*}
+        if {_wh} is set:
+            send "&e===== WEBHOOK ====="
+            send "name=%name of {_wh}% url=%webhook url of {_wh}% channel=%webhook channel of {_wh}% owner=%webhook owner of {_wh}% guild=%name of (guild of {_wh})%"
+
+        # --- text channel ---
+        set {_tc} to first element of (text channels of {_g})
+        if {_tc} is set:
+            send "&e===== TEXT CHANNEL ====="
+            send "discord id: &7%discord id of {_tc}%  (created %creation date of {_tc}%)"
+            send "name: &7%name of {_tc}%"
+            send "guild: &7%name of (guild of {_tc})%"
+            send "topic: &7%topic of {_tc}%"
+            send "nsfw: &7%nsfw of {_tc}%"
+            send "slowmode: &7%slowmode of {_tc}%"
+            send "jump url: &7%jump url of {_tc}%"
+            send "channel position: &7%channel position of {_tc}%"
+            send "category: &7%category of {_tc}%"
+            send "threads: &7%number of (threads of {_tc})%"
+
+        # --- voice channel ---
+        set {_vc} to first element of (voice channels of {_g})
+        if {_vc} is set:
+            send "&e===== VOICE CHANNEL ====="
+            send "name: &7%name of {_vc}%"
+            send "bitrate: &7%bitrate of {_vc}%"
+            send "user limit: &7%user limit of {_vc}%"
+            send "region: &7%region of {_vc}%"
+            send "voice status: &7%voice status of {_vc}%"
+            send "slowmode: &7%slowmode of {_vc}%"
+            send "connected members: &7%number of (members of {_vc})%"
+
+        # --- category ---
+        set {_cat} to first element of (categories of {_g})
+        if {_cat} is set:
+            send "&e===== CATEGORY ====="
+            send "name: &7%name of {_cat}%"
+            send "guild: &7%name of (guild of {_cat})%"
+            send "child channels: &7%number of (child channels of {_cat})%"
+
+        # --- error layer ---
+        send "&e===== ERROR LAYER ====="
+        send "last discord error: &7%the last discord error%"
+        try:
+            send "last error code: &7%error code of the last discord error%"
+        catch {_errs::*}:
+            send "&ccaught %number of {_errs::*}% error(s)"
+
+        # --- PARSE-ONLY block: properties whose operand we can't reach at runtime
+        #     from a plain command. Operands are unset, so these print <none>; the
+        #     point is that every one of them PARSES (= the property is registered). ---
+        send "&e===== PARSE-ONLY ====="
+        send "&8(message) content=%content of {_msg}% author=%author of {_msg}% member=%member author of {_msg}% guild=%guild of {_msg}% jumpurl=%jump url of {_msg}% id=%discord id of {_msg}%"
+        send "&8(message) poll=%poll of {_msg}% ref=%referenced message of {_msg}% embeds=%number of (embeds of {_msg})% attachments=%number of (attachments of {_msg})% reactions=%number of (reactions of {_msg})%"
+        send "&8(message mentions) users=%number of (mentioned users of {_msg})% members=%number of (mentioned members of {_msg})% roles=%number of (mentioned roles of {_msg})% channels=%number of (mentioned channels of {_msg})% voice=%number of (mentioned voice channels of {_msg})% emotes=%number of (mentioned emotes of {_msg})%"
+        send "&8(poll) question=%poll question of {_poll}% answers=%number of (poll answers of {_poll})%"
+        send "&8(poll answer) text=%answer text of {_ans}% votes=%answer votes of {_ans}% emote=%answer emote of {_ans}%"
+        send "&8(attachment) url=%attachment url of {_att}% file=%file name of {_att}% ext=%file extension of {_att}% duration=%attachment duration of {_att}%"
+        send "&8(invite) code=%invite code of {_inv}% url=%invite url of {_inv}% inviter=%invite inviter of {_inv}% maxage=%invite max age of {_inv}% maxuses=%invite max uses of {_inv}% uses=%invite uses of {_inv}% created=%invite creation date of {_inv}%"
+        send "&8(ban) user=%banned user of {_ban}% reason=%ban reason of {_ban}%"
+        send "&8(application) name=%name of {_app}% desc=%application description of {_app}% owner=%application owner of {_app}% avatar=%avatar url of {_app}% policy=%privacy policy url of {_app}% tos=%terms of service url of {_app}%"
+        send "&8(audit log) user=%logged user of {_log}% action=%log action type of {_log}% reason=%log reason of {_log}% guild=%guild of {_log}%"
+        send "&8(automod) content=%automod message content of {_am}% matched=%matched content of {_am}% keyword=%matched keyword of {_am}% rule=%automod rule id of {_am}% action=%automod action type of {_am}% alert=%alert message id of {_am}%"
+        send "&8(forum tag) name=%name of {_ftag}% emote=%tag emote of {_ftag}%"
+        send "&8(private channel) user=%private channel user of {_pc}%   (stage) instance=%stage instance of {_stage}%"
+        send "&8(thread) owner=%owner of {_thread}% count=%message count of {_thread}% archived=%archived of {_thread}% locked=%locked of {_thread}%"
+
+        # --- SETTER parse-test: guarded by an always-false condition so it PARSES every
+        #     setter (the acceptChange/change path) but NEVER mutates real Discord state.
+        #     ({_run-setters} is never set, so this block is dead at runtime.) ---
+        if {_run-setters} is set:
+            # guild (REST setters)
+            set banner of {_g} to "https://example.com/banner.png"
+            set afk timeout of {_g} to 300
+            set verification level of {_g} to "high"
+            set afk channel of {_g} to {_vc}
+            # member
+            set nickname of {_m} to "new nick"
+            add {_r} to roles of {_m}
+            remove {_r} from roles of {_m}
+            # role (incl. the shared `name` setter)
+            set name of {_r} to "renamed role"
+            set color of {_r} to red
+            # text channel
+            set topic of {_tc} to "new topic"
+            set nsfw of {_tc} to true
+            set category of {_tc} to {_cat}
+            # voice channel
+            set bitrate of {_vc} to 64000
+            set user limit of {_vc} to 10
+            set region of {_vc} to "us-east"
+            # bot (live presence)
+            set online status of {_bot} to idle
+            set activity of {_bot} to "with Skript"
+            # scheduled event (REST setters)
+            set event status of {_se} to "active"
+            set location of {_se} to "main stage"
+            set end date of {_se} to now
+            set cover of {_se} to "https://example.com/cover.png"
+
+        send "&a===== DONE ====="

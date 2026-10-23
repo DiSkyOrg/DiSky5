@@ -1,0 +1,54 @@
+# Exercises the APT-generated conditions (Mode A = PropertyCondition, Mode B = full Condition).
+# Mode A conditions are free-negated by Skript; Mode B negation uses the explicit negative patterns.
+
+command /conditions-demo:
+    trigger:
+        # placeholders: unset locals parse fine, this file exists to lock the syntax down
+        # --- Mode A (BE) ---
+        if {_member} is muted:
+            send "member is muted"
+        if {_member} is not muted:
+            send "member is not muted"
+
+        if {_member} is deafened:
+            send "member is deafened"
+
+        if {_member} is timed out:
+            send "member is timed out"
+
+        if {_member} is a discord bot:
+            send "member is a bot"
+        if {_member} is not a discord bot:
+            send "member is a human"
+
+        if {_user} is a discord bot:
+            send "user is a bot"
+        if {_user} is a system user:
+            send "user is a system account"
+
+        if {_message} is edited:
+            send "message was edited"
+        if {_message} is pinned:
+            send "message is pinned"
+        if {_message} is ephemeral:
+            send "message is ephemeral"
+        if {_message} is tts:
+            send "message is tts"
+        if {_message} is from a guild:
+            send "message came from a guild"
+
+        if {_role} is hoisted:
+            send "role is hoisted"
+        if {_role} is mentionable:
+            send "role is mentionable"
+
+        # --- Mode B (full Condition) ---
+        if {_member} has discord role {_role}:
+            send "member has the role"
+        if {_member} does not have discord role {_role}:
+            send "member lacks the role"
+
+        if {_member} can interact with {_role}:
+            send "member can interact with the role"
+        if {_member} cannot interact with {_member}:
+            send "member cannot interact with the other member"

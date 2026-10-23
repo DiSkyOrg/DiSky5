@@ -1,0 +1,28 @@
+# Enum types (DiSky V5) — @SkriptEnum → parsable ClassInfo.
+#
+# The enum types (onlinestatus, channeltype, memberflag, activitytype, permission) are APT-generated
+# from the holders in descriptors/enums/. Each accepts its constants as literals (name lowercased,
+# underscores → spaces) plus, for permission, friendly aliases. Enum literals parse reliably in a
+# TYPED context (a setter/comparison whose expected type is the enum), which is what this exercises.
+
+on ready:
+	# online status: settable on a bot, returns an OnlineStatus. Use the "dnd" alias in comparisons —
+	# the canonical "do not disturb" contains the reserved word "not", which breaks a bare literal.
+	set online status of event-bot to dnd
+	if (online status of event-bot) is dnd:
+		send "[enums] onlinestatus set + compared OK" to console
+	# toString must be lowercase-with-spaces, not the raw enum name.
+	send "[enums] status display = %online status of event-bot%" to console
+
+	# permission: canonical name and friendly alias must parse to the SAME constant.
+	if (manage messages) is message manage:
+		send "[enums] permission alias == canonical OK" to console
+
+on member join:
+	# online status read-only on a member, still typed.
+	send "[enums] joiner status = %online status of event-member%" to console
+	if online status of event-member is offline:
+		send "[enums] joiner is offline" to console
+
+	# member flags: a set of MemberFlag, each stringified via the enum toString.
+	send "[enums] joiner flags = %flags of event-member%" to console

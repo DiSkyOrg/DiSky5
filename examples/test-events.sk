@@ -1,0 +1,457 @@
+# ============================================================================
+#  DiSky V5 — ALL EVENTS test script  (auto-generated)
+#
+#  HOW TO USE
+#  1. Put your Discord bot token in the `define bot` below.
+#  2. Copy this file into  plugins/Skript/scripts/  on a Paper server that has
+#     Skript 2.15.2 + the DiSky5 plugin jar.
+#  3. /sk reload test-events  — every event block should LOAD WITH NO PARSE
+#     ERRORS (that alone tests that all events + their values parse).
+#  4. Connect the bot, then trigger events on Discord: each fires writeDebug()
+#     which prints to the console.
+#
+#  writeDebug() currently sends to console; later, swap the body for a
+#  write-to-file (the TODO line below).
+# ============================================================================
+
+function writeDebug(event: text, data: text):
+    send "&8[&bDiSky-evt&8] &e%{_event}%&7 -> %{_data}%" to console
+    # TODO (later): write "[%now%] %{_event}%: %{_data}%%nl%" to file "plugins/DiSky/event-test.log"
+
+define bot named "test-bot":
+    token: "PUT-YOUR-BOT-TOKEN-HERE"
+    intents: default intents
+
+# Lifecycle is a global event in V5, no longer a section of 'define bot'.
+on ready seen by "test-bot":
+    send "[DiSky] &aEvent-test bot connected as %name of event-bot%." to console
+
+# ============================================================================
+#  EVENTS  (one block per DiSky event, grouped by domain)
+# ============================================================================
+
+# ===== bot =====
+
+on bot guild joined:
+    writeDebug("Bot Join Event", "bot=%event-bot% guild=%event-guild%")
+
+on bot guild leave:
+    writeDebug("Bot Leave Event", "bot=%event-bot% guild=%event-guild%")
+
+on bot shutdown:
+    writeDebug("Bot Shutdown Event", "bot=%event-bot%")
+
+on guild ready:
+    writeDebug("Guild Ready Event", "bot=%event-bot% guild=%event-guild%")
+
+on ready:
+    writeDebug("Bot Ready Event", "bot=%event-bot%")
+
+
+# ===== channel =====
+
+on discord channel create:
+    writeDebug("Channel Create Event", "bot=%event-bot% guild=%event-guild% channel=%event-channel%")
+
+on discord channel delete:
+    writeDebug("Channel Delete Event", "bot=%event-bot% guild=%event-guild% channel=%event-channel%")
+
+on discord channel name change:
+    writeDebug("Channel Name Update Event", "bot=%event-bot% guild=%event-guild% channel=%event-channel%")
+
+on discord channel topic change:
+    writeDebug("Channel Topic Update Event", "bot=%event-bot% guild=%event-guild% channel=%event-channel%")
+
+on discord channel nsfw change:
+    writeDebug("Channel NSFW Update Event", "bot=%event-bot% guild=%event-guild% channel=%event-channel%")
+
+on discord channel position change:
+    writeDebug("Channel Position Update Event", "bot=%event-bot% guild=%event-guild% channel=%event-channel%")
+
+on discord channel parent change:
+    writeDebug("Channel Parent Update Event", "bot=%event-bot% guild=%event-guild% channel=%event-channel%")
+
+on discord channel slowmode change:
+    writeDebug("Channel Slowmode Update Event", "bot=%event-bot% guild=%event-guild% channel=%event-channel%")
+
+on discord channel type change:
+    writeDebug("Channel Type Update Event", "bot=%event-bot% guild=%event-guild% channel=%event-channel%")
+
+on discord channel user limit change:
+    writeDebug("Channel User Limit Update Event", "bot=%event-bot% guild=%event-guild% channel=%event-channel%")
+
+on discord channel bitrate change:
+    writeDebug("Channel Bitrate Update Event", "bot=%event-bot% guild=%event-guild% channel=%event-channel%")
+
+on discord channel region change:
+    writeDebug("Channel Region Update Event", "bot=%event-bot% guild=%event-guild% channel=%event-channel%")
+
+on discord channel voice status change:
+    writeDebug("Channel Voice Status Update Event", "bot=%event-bot% guild=%event-guild% channel=%event-channel%")
+
+on discord channel tags change:
+    writeDebug("Channel Applied Tags Update Event", "bot=%event-bot% guild=%event-guild% channel=%event-channel%")
+
+on discord channel archived change:
+    writeDebug("Channel Archived Update Event", "bot=%event-bot% guild=%event-guild% channel=%event-channel%")
+
+on discord channel archive timestamp change:
+    writeDebug("Channel Archive Timestamp/Date Update Event", "bot=%event-bot% guild=%event-guild% channel=%event-channel%")
+
+on discord channel auto-archive duration change:
+    writeDebug("Channel Auto Archive Duration Update Event", "bot=%event-bot% guild=%event-guild% channel=%event-channel%")
+
+on discord channel default layout change:
+    writeDebug("Channel Default Layout Update Event", "bot=%event-bot% guild=%event-guild% channel=%event-channel%")
+
+on discord channel default reaction change:
+    writeDebug("Channel Default Reaction Update Event", "bot=%event-bot% guild=%event-guild% channel=%event-channel%")
+
+on discord channel default sort order change:
+    writeDebug("Channel Default Sort Order Update Event", "bot=%event-bot% guild=%event-guild% channel=%event-channel%")
+
+on discord channel default thread slowmode change:
+    writeDebug("Channel Default Thread Slowmode Update Event", "bot=%event-bot% guild=%event-guild% channel=%event-channel%")
+
+on discord channel flags change:
+    writeDebug("Channel Flags Update Event", "bot=%event-bot% guild=%event-guild% channel=%event-channel%")
+
+on discord channel invitable change:
+    writeDebug("Channel Invitable Update Event", "bot=%event-bot% guild=%event-guild% channel=%event-channel%")
+
+on discord channel locked change:
+    writeDebug("Channel Locked Update Event", "bot=%event-bot% guild=%event-guild% channel=%event-channel%")
+
+
+# ===== command =====
+
+on slash command received:
+    writeDebug("Slash Command", "bot=%event-bot% user=%event-user% guild=%event-guild% member=%event-member% channel=%event-channel% executedCommand=%execute command% commandId=%the command id%")
+
+on message command received:
+    writeDebug("Message Command", "bot=%event-bot% user=%event-user% guild=%event-guild% member=%event-member% message=%event-message% channel=%event-channel% executedCommand=%execute command% targetMessage=%the target message%")
+
+on user command received:
+    writeDebug("User Command", "bot=%event-bot% user=%event-user% guild=%event-guild% member=%event-member% channel=%event-channel% executedCommand=%execute command% targetUser=%the target user%")
+
+on slash completion received:
+    writeDebug("Slash Command Completion Event", "bot=%event-bot% guild=%event-guild% member=%event-member% user=%event-user% channel=%event-channel% currentArgument=%current argument name%")
+
+
+# ===== component =====
+
+on button clicked:
+    writeDebug("Button Click", "bot=%event-bot% guild=%event-guild% user=%event-user% member=%event-member% message=%event-message% channel=%event-channel% clickedId=%click id%")
+
+on modal clicked:
+    writeDebug("Modal Received", "bot=%event-bot% guild=%event-guild% user=%event-user% member=%event-member% message=%event-message% channel=%event-channel% receivedId=%receive id%")
+
+
+# ===== dropdown =====
+
+on dropdown clicked:
+    writeDebug("String Dropdown Click Event", "bot=%event-bot% member=%event-member% guild=%event-guild% user=%event-user% message=%event-message% channel=%event-channel% selectedValues=%selected values%")
+
+on entity dropdown clicked:
+    writeDebug("Entity Dropdown Click Event", "bot=%event-bot% member=%event-member% guild=%event-guild% user=%event-user% message=%event-message% channel=%event-channel% selectedEntities=%selected entity%")
+
+
+# ===== emoji =====
+
+on discord emoji added:
+    writeDebug("Emoji Add", "bot=%event-bot% guild=%event-guild% managed=%managed state%")
+
+on discord emoji removed:
+    writeDebug("Emoji Remove", "bot=%event-bot% guild=%event-guild% managed=%managed state%")
+
+on discord emoji name updated:
+    writeDebug("Emoji Name Update", "bot=%event-bot% guild=%event-guild%")
+
+on discord emoji roles updated:
+    writeDebug("Emoji Roles Update", "bot=%event-bot% guild=%event-guild% newRoles=%the new emoji roles% oldRoles=%the old emoji roles%")
+
+
+# ===== guild =====
+
+on discord automod execution:
+    writeDebug("AutoMod Execution", "bot=%event-bot% guild=%event-guild% channel=%event-channel% user=%event-user%")
+
+on discord guild ban:
+    writeDebug("Guild Ban Event", "bot=%event-bot% user=%event-user% guild=%event-guild%")
+
+on discord bot join guild:
+    writeDebug("Guild Join Event", "bot=%event-bot% guild=%event-guild%")
+
+on discord guild log create:
+    writeDebug("Guild Log Entry Create Event", "bot=%event-bot% guild=%event-guild%")
+
+on discord guild unban:
+    writeDebug("Guild Unban Event", "bot=%event-bot% user=%event-user% guild=%event-guild%")
+
+
+# ===== guildupdate =====
+
+on discord guild afk channel change:
+    writeDebug("Guild AFK Channel Event", "bot=%event-bot% guild=%event-guild% channel=%event-channel%")
+
+on discord guild afk timeout change:
+    writeDebug("Guild AFK Timeout Event", "bot=%event-bot% guild=%event-guild%")
+
+on discord guild banner change:
+    writeDebug("Guild Banner Event", "bot=%event-bot% guild=%event-guild%")
+
+on discord guild boost count change:
+    writeDebug("Guild Boost Count Update", "bot=%event-bot% guild=%event-guild%")
+
+on discord guild boost tier change:
+    writeDebug("Guild Boost Tier Update", "bot=%event-bot% guild=%event-guild%")
+
+on discord guild icon change:
+    writeDebug("Guild Icon Event", "bot=%event-bot% guild=%event-guild%")
+
+on discord guild name update:
+    writeDebug("Guild Name Event", "bot=%event-bot% guild=%event-guild%")
+
+on discord guild owner change:
+    writeDebug("Guild Owner Event", "bot=%event-bot% guild=%event-guild% member=%event-member%")
+
+on discord guild splash change:
+    writeDebug("Guild Splash Event", "bot=%event-bot% guild=%event-guild%")
+
+
+# ===== invite =====
+
+on discord guild invite create:
+    writeDebug("Invite Create Event", "bot=%event-bot% guild=%event-guild% channel=%event-channel%")
+
+on discord guild invite delete:
+    writeDebug("Invite Delete Event", "bot=%event-bot% guild=%event-guild% channel=%event-channel%")
+
+
+# ===== member =====
+
+on member joined guild:
+    writeDebug("Member Join Event", "bot=%event-bot% member=%event-member% guild=%event-guild%")
+
+on member leave guild:
+    writeDebug("Member Leave Event", "bot=%event-bot% member=%event-member% user=%event-user% guild=%event-guild%")
+
+on role added:
+    writeDebug("Role Add Event", "bot=%event-bot% member=%event-member% guild=%event-guild% addedRoles=%added roles%")
+
+on role removed:
+    writeDebug("Role Remove Event", "bot=%event-bot% member=%event-member% guild=%event-guild% removedRoles=%removed roles%")
+
+on member boosted:
+    writeDebug("Member Boost Event", "bot=%event-bot% message=%event-message% user=%event-user% guild=%event-guild% channel=%event-channel%")
+
+on member voice join:
+    writeDebug("Member Voice Join Event", "bot=%event-bot% member=%event-member% guild=%event-guild%")
+
+on member voice leave:
+    writeDebug("Member Voice Leave Event", "bot=%event-bot% member=%event-member% guild=%event-guild%")
+
+on guild member nickname change:
+    writeDebug("Member Nickname Event", "bot=%event-bot% member=%event-member% guild=%event-guild% nickname=%member nickname% oldNickname=%old member nickname%")
+
+on guild member avatar change:
+    writeDebug("Member Avatar Event", "bot=%event-bot% member=%event-member% guild=%event-guild% avatarUrl=%member avatar url% oldAvatarUrl=%old member avatar url%")
+
+on guild member screen accept:
+    writeDebug("Member Accept Screen Event", "bot=%event-bot% member=%event-member% guild=%event-guild% pendingState=%member pending state% oldPendingState=%old member pending state%")
+
+on guild member boost time change:
+    writeDebug("Member Boost Time Update Event", "bot=%event-bot% member=%event-member% guild=%event-guild% user=%event-user%")
+
+on member timeout:
+    writeDebug("Member Timeout Event", "bot=%event-bot% member=%event-member% guild=%event-guild% user=%event-user%")
+
+on member mute:
+    writeDebug("Member Self Mute Event", "bot=%event-bot% member=%event-member% guild=%event-guild% muteState=%member muted state% oldMuteState=%old member muted state%")
+
+on member deafen:
+    writeDebug("Member Self Deafen Event", "bot=%event-bot% member=%event-member% guild=%event-guild% deafenState=%member deafened state% oldDeafenState=%old member deafened state%")
+
+
+# ===== message =====
+
+on message received:
+    writeDebug("Message Receive", "bot=%event-bot% member=%event-member% guild=%event-guild% user=%event-user% message=%event-message% channel=%event-channel%")
+
+on message deleted:
+    writeDebug("Message Delete", "bot=%event-bot% guild=%event-guild% channel=%event-channel%")
+
+on message edited:
+    writeDebug("Message Edit", "bot=%event-bot% guild=%event-guild% message=%event-message% channel=%event-channel%")
+
+
+# ===== poll =====
+
+on message poll vote added:
+    writeDebug("Poll Vote Add", "bot=%event-bot% message=%event-message% member=%event-member% user=%event-user% channel=%event-channel% guild=%event-guild%")
+
+on message poll vote removed:
+    writeDebug("Poll Vote Remove", "bot=%event-bot% message=%event-message% member=%event-member% user=%event-user% channel=%event-channel% guild=%event-guild%")
+
+
+# ===== reaction =====
+
+on reaction add:
+    writeDebug("Reaction Add", "bot=%event-bot% channel=%event-channel% guild=%event-guild% member=%event-member% user=%event-user% message=%reaction message%")
+
+on reaction remove:
+    writeDebug("Reaction Remove", "bot=%event-bot% channel=%event-channel% guild=%event-guild% member=%event-member% user=%event-user% message=%reaction message%")
+
+on reaction remove all:
+    writeDebug("Reaction Remove All", "bot=%event-bot% channel=%event-channel% guild=%event-guild% message=%reaction message%")
+
+
+# ===== role =====
+
+on discord guild role created:
+    writeDebug("Role Create Event", "bot=%event-bot% guild=%event-guild% role=%event-role%")
+
+on discord guild role delete:
+    writeDebug("Role Delete Event", "bot=%event-bot% guild=%event-guild% role=%event-role%")
+
+on discord guild role color update:
+    writeDebug("Role Color Update Event", "bot=%event-bot% guild=%event-guild% role=%event-role%")
+
+on discord guild role name update:
+    writeDebug("Role Name Update Event", "bot=%event-bot% guild=%event-guild% role=%event-role%")
+
+on discord guild role hoisted update:
+    writeDebug("Role Hoisted Update Event", "bot=%event-bot% guild=%event-guild% role=%event-role%")
+
+on discord guild role icon update:
+    writeDebug("Role Icon Update Event", "bot=%event-bot% guild=%event-guild% role=%event-role%")
+
+on discord guild role position update:
+    writeDebug("Role Position Update Event", "bot=%event-bot% guild=%event-guild% role=%event-role%")
+
+on discord guild role mentionable update:
+    writeDebug("Role Mentionable Update Event", "bot=%event-bot% guild=%event-guild% role=%event-role%")
+
+on discord guild role permissions update:
+    writeDebug("Role Permissions Update Event", "bot=%event-bot% guild=%event-guild% role=%event-role% permissions=%the new role permissions% pastPermissions=%the old role permissions%")
+
+
+# ===== scheduledevent =====
+
+on discord scheduled event create:
+    writeDebug("Scheduled Event Create", "bot=%event-bot% guild=%event-guild%")
+
+on discord scheduled event delete:
+    writeDebug("Scheduled Event Delete", "bot=%event-bot% guild=%event-guild%")
+
+on discord scheduled event user add:
+    writeDebug("Scheduled Event User Add", "bot=%event-bot% guild=%event-guild% user=%event-user% member=%event-member%")
+
+on discord scheduled event user remove:
+    writeDebug("Scheduled Event User Remove", "bot=%event-bot% guild=%event-guild% user=%event-user% member=%event-member%")
+
+on discord scheduled event name change:
+    writeDebug("Scheduled Event Name Update", "bot=%event-bot% guild=%event-guild% name=%scheduled event name% oldName=%old scheduled event name%")
+
+on discord scheduled event description change:
+    writeDebug("Scheduled Event Description Update", "bot=%event-bot% guild=%event-guild% description=%scheduled event description% oldDescription=%old scheduled event description%")
+
+on discord scheduled event location change:
+    writeDebug("Scheduled Event Location Update", "bot=%event-bot% guild=%event-guild% channel=%event-channel% location=%scheduled event location% oldLocation=%old scheduled event location%")
+
+on discord scheduled event start time change:
+    writeDebug("Scheduled Event Start Time Update", "bot=%event-bot% guild=%event-guild% startTime=%scheduled event start time% oldStartTime=%old scheduled event start time%")
+
+on discord scheduled event end time change:
+    writeDebug("Scheduled Event End Time Update", "bot=%event-bot% guild=%event-guild% endTime=%scheduled event end time% oldEndTime=%old scheduled event end time%")
+
+on discord scheduled event status change:
+    writeDebug("Scheduled Event Status Update", "bot=%event-bot% guild=%event-guild% status=%scheduled event status% oldStatus=%old scheduled event status%")
+
+on discord scheduled event cover image change:
+    writeDebug("Scheduled Event Cover Image Update", "bot=%event-bot% guild=%event-guild% coverImage=%scheduled event cover image% oldCoverImage=%old scheduled event cover image%")
+
+
+# ===== sticker =====
+
+on discord guild sticker added:
+    writeDebug("Guild Sticker Add", "guild=%event-guild% stickerId=%sticker id%")
+
+on discord guild sticker removed:
+    writeDebug("Guild Sticker Remove", "guild=%event-guild% stickerId=%sticker id%")
+
+on discord guild sticker description updated:
+    writeDebug("Guild Sticker Description Update", "guild=%event-guild%")
+
+on discord guild sticker name updated:
+    writeDebug("Guild Sticker Name Update", "guild=%event-guild%")
+
+on discord guild sticker available state updated:
+    writeDebug("Guild Sticker Available State Update", "guild=%event-guild%")
+
+on discord guild sticker tags updated:
+    writeDebug("Guild Sticker Tags Update", "guild=%event-guild% newTags=%the new sticker tags% oldTags=%the old sticker tags%")
+
+
+# ===== thread =====
+
+on discord thread join:
+    writeDebug("Thread Join Event", "bot=%event-bot% member=%event-member% guild=%event-guild% channel=%event-channel%")
+
+on discord thread leave:
+    writeDebug("Thread Leave Event", "bot=%event-bot% member=%event-member% guild=%event-guild% channel=%event-channel%")
+
+
+# ===== user =====
+
+on discord user activity change:
+    writeDebug("User Activity Order Update Event", "bot=%event-bot% user=%event-user% guild=%event-guild% member=%event-member% activities=%user activities%")
+
+on discord user activity started:
+    writeDebug("User Activity Start Event", "bot=%event-bot% user=%event-user% member=%event-member% guild=%event-guild%")
+
+on discord user activity ended:
+    writeDebug("User Activity End Event", "bot=%event-bot% user=%event-user% member=%event-member% guild=%event-guild%")
+
+on discord user typing:
+    writeDebug("User Typing Event", "bot=%event-bot% user=%event-user% guild=%event-guild% member=%event-member% channel=%event-channel%")
+
+on discord user avatar change:
+    writeDebug("User Avatar Update Event", "bot=%event-bot% user=%event-user% avatarUrl=%avatar url% oldAvatarUrl=%old avatar url%")
+
+on discord user discriminator change:
+    writeDebug("User Discriminator Update Event", "bot=%event-bot% user=%event-user% discriminator=%discriminator% oldDiscriminator=%old discriminator%")
+
+on discord user name change:
+    writeDebug("User Name Update Event", "bot=%event-bot% user=%event-user% name=%name% oldName=%old name%")
+
+on discord user online status change:
+    writeDebug("User Online Status Update Event", "bot=%event-bot% user=%event-user% member=%event-member% guild=%event-guild% onlineStatus=%online status% oldOnlineStatus=%old online status%")
+
+on discord user global name change:
+    writeDebug("User Global Name Update Event", "bot=%event-bot% user=%event-user% globalName=%global name% oldGlobalName=%old global name%")
+
+on discord user primary guild change:
+    writeDebug("User Primary Guild Update Event", "bot=%event-bot% user=%event-user% primaryGuildId=%primary guild id% oldPrimaryGuildId=%old primary guild id% userTag=%user tag% oldUserTag=%old user tag%")
+
+
+# ===== voice =====
+
+on discord guild voice deafened:
+    writeDebug("Guild Voice Deafen Event", "bot=%event-bot% member=%event-member% guild=%event-guild%")
+
+on discord guild voice server muted:
+    writeDebug("Guild Voice Server Mute Event", "bot=%event-bot% member=%event-member% guild=%event-guild%")
+
+on discord guild voice muted:
+    writeDebug("Guild Voice Mute Event", "bot=%event-bot% member=%event-member% guild=%event-guild%")
+
+on discord guild voice streaming:
+    writeDebug("Guild Voice Stream Event", "bot=%event-bot% member=%event-member% guild=%event-guild%")
+
+on discord guild voice videoing:
+    writeDebug("Guild Voice Video Event", "bot=%event-bot% member=%event-member% guild=%event-guild%")
+
+on discord guild voice request to speak:
+    writeDebug("Guild Voice Request To Speak Event", "bot=%event-bot% member=%event-member% guild=%event-guild% requestToSpeak=%request to speak% pastRequestToSpeak=%old request to speak%")
+

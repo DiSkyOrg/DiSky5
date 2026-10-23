@@ -1,0 +1,121 @@
+# File uploads (2026-09-07): the `fileupload` type, its constructor and the message builder's
+# `attachments`. One command per case; every message the bot sends is destroyed in the same block.
+#
+# Setup: drop any small file at plugins/DiSky/test-upload.txt before running "!file-local".
+# Expected on Discord: the message appears with the file attached; the console gets one line per case.
+
+on message receive seen by "test-bot":
+    if discord content of event-message is "!file-local":
+        try:
+            set {_f} to a new file upload from file "plugins/DiSky/test-upload.txt"
+            send "[FILE] local upload created: %file name of {_f}%" to console
+            set {_m} to a new message with content "local file" in event-channel
+            add {_f} to attachments of {_m}
+            send "[FILE] builder attachments: %attachments of {_m}%" to console
+            await set {_sent} to the build result of {_m}
+            send "[FILE] PASS local (sent attachments: %size of discord attachments of {_sent}%, first: %file name of first element of discord attachments of {_sent}%)" to console
+        catch {_e::*}:
+            send "[FILE] FAIL local: %{_e::*}%" to console
+
+    if discord content of event-message is "!file-url":
+        try:
+            set {_f} to a new file upload from url "https://raw.githubusercontent.com/SkriptLang/Skript/master/README.md"
+            send "[FILE] url upload created: %file name of {_f}%" to console
+            set {_m} to a new message with content "downloaded at send time" in event-channel
+            add {_f} to attachments of {_m}
+            await set {_sent} to the build result of {_m}
+            send "[FILE] PASS url (%size of discord attachments of {_sent}% attachment(s))" to console
+        catch {_e::*}:
+            send "[FILE] FAIL url: %{_e::*}%" to console
+
+    if discord content of event-message is "!file-url-named-spoiler":
+        try:
+            set {_f} to a new file upload from url "https://raw.githubusercontent.com/SkriptLang/Skript/master/README.md" named "renamed.md" with spoiler true
+            send "[FILE] name after spoiler: %file name of {_f}% (expected SPOILER_renamed.md)" to console
+            set {_m} to a new message with content "renamed + spoiler" in event-channel
+            add {_f} to attachments of {_m}
+            await set {_sent} to the build result of {_m}
+            set {_att} to first element of discord attachments of {_sent}
+            if {_att} is a spoiler attachment:
+                send "[FILE] PASS named spoiler (%file name of {_att}%, spoiler: true)" to console
+            else:
+                send "[FILE] FAIL named spoiler: %file name of {_att}% is not a spoiler on Discord" to console
+        catch {_e::*}:
+            send "[FILE] FAIL named spoiler: %{_e::*}%" to console
+
+    if discord content of event-message is "!file-url-dead":
+        # The download happens when the message is sent, so the error must land here, not at creation.
+        try:
+            set {_f} to a new file upload from url "https://example.com/does-not-exist-404.png"
+            send "[FILE] dead url created without error: %file name of {_f}%" to console
+            set {_m} to a new message with content "should never be sent" in event-channel
+            add {_f} to attachments of {_m}
+            await set {_sent} to the build result of {_m}
+            # A failing line does not abort the block (the error is buffered until the catch), so
+            # only the variable tells whether the message left.
+            if {_sent} is set:
+                send "[FILE] FAIL dead url: message was sent" to console
+        catch {_e::*}:
+            send "[FILE] PASS dead url errored at send: %{_e::*}%" to console
+
+    if discord content of event-message is "!file-props":
+        try:
+            set {_f} to a new file upload from file "plugins/DiSky/test-upload.txt"
+            set file name of {_f} to "renamed.txt"
+            set file description of {_f} to "alt text set from Skript"
+            set spoiler of {_f} to true
+            send "[FILE] after set spoiler true: %file name of {_f}%" to console
+            set spoiler of {_f} to false
+            send "[FILE] after set spoiler false: %file name of {_f}% (expected renamed.txt)" to console
+            set {_m} to a new message with content "renamed via property" in event-channel
+            add {_f} to attachments of {_m}
+            await set {_sent} to the build result of {_m}
+            send "[FILE] PASS props (%file name of first element of discord attachments of {_sent}%)" to console
+        catch {_e::*}:
+            send "[FILE] FAIL props: %{_e::*}%" to console
+
+    if discord content of event-message is "!file-list":
+        # SET with a list, then REMOVE by name: only "b.txt" should reach Discord.
+        try:
+            set {_a} to a new file upload from file "plugins/DiSky/test-upload.txt" named "a.txt"
+            set {_b} to a new file upload from file "plugins/DiSky/test-upload.txt" named "b.txt"
+            set {_m} to a new message with content "list set then remove" in event-channel
+            set attachments of {_m} to {_a} and {_b}
+            send "[FILE] after set: %attachments of {_m}%" to console
+            remove "a.txt" from attachments of {_m}
+            send "[FILE] after remove: %attachments of {_m}% (expected b.txt)" to console
+            await set {_sent} to the build result of {_m}
+            send "[FILE] PASS list (%size of discord attachments of {_sent}% attachment(s): %file name of first element of discord attachments of {_sent}%)" to console
+        catch {_e::*}:
+            send "[FILE] FAIL list: %{_e::*}%" to console
+
+    if discord content of event-message is "!file-reply":
+        # A builder replied with: its payload (text + file) goes to the event channel, its own channel is ignored.
+        try:
+            set {_f} to a new file upload from file "plugins/DiSky/test-upload.txt"
+            set {_m} to a new message with content "replied with a builder carrying a file" in event-channel
+            add {_f} to attachments of {_m}
+            reply with {_m} with reference event-message
+            send "[FILE] PASS reply with builder" to console
+        catch {_e::*}:
+            send "[FILE] FAIL reply with builder: %{_e::*}%" to console
+
+# Re-upload an attachment someone posted: send any message with a file attached, then "!file-echo"
+# as a reply to it (or just send "!file-echo" with a file attached to it).
+on message receive seen by "test-bot":
+    if discord content of event-message is "!file-echo":
+        try:
+            set {_src} to referenced message of event-message
+            if {_src} is not set:
+                set {_src} to event-message
+            set {_att} to first element of discord attachments of {_src}
+            if {_att} is not set:
+                send "[FILE] echo: no attachment on the source message" to console
+                stop
+            set {_f} to a new file upload from attachment {_att} named "echo-%file name of {_att}%"
+            set {_m} to a new message with content "re-uploaded" in event-channel
+            add {_f} to attachments of {_m}
+            await set {_sent} to the build result of {_m}
+            send "[FILE] PASS echo (%file name of first element of discord attachments of {_sent}%)" to console
+        catch {_e::*}:
+            send "[FILE] FAIL echo: %{_e::*}%" to console

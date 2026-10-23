@@ -1,0 +1,117 @@
+# Conditions added in the 2026-08-27 pass. `test-conditions.sk` covers the ones that existed before.
+#
+# Mode A (PropertyCondition) conditions are free-negated by Skript ("is not ..."), Mode B ones carry
+# their own negative pattern.
+
+# ---------------------------------------------------------------------------------------------
+# Message
+# ---------------------------------------------------------------------------------------------
+
+on message receive seen by "test-bot":
+    if discord content of event-message is "!message-conditions":
+        if event-message has a poll:
+            post "this message carries a poll" to event-channel
+
+        if event-message is forwarded:
+            post "this message is a forward" to event-channel
+
+        if event-message is a voice message:
+            post "this is a voice message" to event-channel
+
+        if event-message is from a dm:
+            post "sent in DMs" to event-channel
+        if event-message is not from a dm:
+            post "sent in a guild" to event-channel
+
+        # Alternate spellings of the same condition.
+        if event-message is from a private message:
+            post "dm (alt spelling)" to event-channel
+        if event-message is from a direct message:
+            post "dm (alt spelling 2)" to event-channel
+
+# ---------------------------------------------------------------------------------------------
+# Attachments
+# ---------------------------------------------------------------------------------------------
+
+on message receive seen by "test-bot":
+    if discord content of event-message is "!attachment-conditions":
+        loop discord attachments of event-message:
+            if loop-value is an image:
+                post "image attachment" to event-channel
+            if loop-value is a video attachment:
+                post "video attachment" to event-channel
+            if loop-value is an audio attachment:
+                post "audio attachment" to event-channel
+            if loop-value is a spoiler attachment:
+                post "spoiler attachment" to event-channel
+            if loop-value is not a spoiler attachment:
+                post "not a spoiler" to event-channel
+
+# ---------------------------------------------------------------------------------------------
+# Poll, emote, profile
+# ---------------------------------------------------------------------------------------------
+
+on message receive seen by "test-bot":
+    if discord content of event-message is "!poll-conditions":
+        set {_poll} to poll of event-message
+        if {_poll} is expired:
+            post "poll expired" to event-channel
+        if {_poll} is finalized:
+            post "poll votes are final" to event-channel
+
+    if discord content of event-message is "!emote-conditions":
+        await set {_emotes::*} to emotes of event-guild
+        loop {_emotes::*}:
+            if loop-value is animated:
+                post "%name of loop-value% is animated" to event-channel
+
+    if discord content of event-message is "!profile-conditions":
+        await set {_profile} to profile of event-user
+        if {_profile} has a banner:
+            post "user has a custom banner" to event-channel
+        if {_profile} doesn't have a custom banner:
+            post "no custom banner" to event-channel
+
+# ---------------------------------------------------------------------------------------------
+# Thread, bot
+# ---------------------------------------------------------------------------------------------
+
+on message receive seen by "test-bot":
+    if discord content of event-message is "!thread-conditions":
+        set {_b} to a new thread builder named "cond-test" in event-channel
+        await set {_t} to the build result of {_b}
+        if {_t} is public:
+            post "public thread" to event-channel
+        if {_t} is not public:
+            post "private thread" to event-channel
+
+    if discord content of event-message is "!bot-conditions":
+        if event-bot is connected:
+            post "bot is connected" to event-channel
+
+# ---------------------------------------------------------------------------------------------
+# Member (Mode B: explicit patterns, explicit negation)
+# ---------------------------------------------------------------------------------------------
+
+on message receive seen by "test-bot":
+    if discord content of event-message is "!permission-conditions":
+        # Every listed permission must be held.
+        if event-member has discord permission administrator:
+            post "administrator" to event-channel
+        if event-member doesn't have discord permission administrator:
+            post "not an administrator" to event-channel
+
+        if event-member has discord permissions manage messages and send messages:
+            post "can moderate messages" to event-channel
+
+        # Scoped to one channel.
+        if event-member has discord permission send messages in event-channel:
+            post "can talk here" to event-channel
+
+    if discord content of event-message is "!thread-membership":
+        set {_b} to a new thread builder named "membership-test" in event-channel
+        await set {_t} to the build result of {_b}
+        if event-member is in the thread {_t}:
+            post "member is in the thread" to event-channel
+        if event-member is not in the thread {_t}:
+            post "member is not in the thread" to event-channel

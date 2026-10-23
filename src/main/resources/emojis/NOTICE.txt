@@ -1,0 +1,7 @@
+discord-emoji-definition.json is Discord's unicode emoji shortcode list, taken unmodified from
+JEmoji by felldo (https://github.com/felldo/JEmoji), file emoji_source_files/discord-emoji-definition.json,
+commit 82149e79176364a1c682b860525093393c77fe05 (2026-07-27).
+
+JEmoji is licensed under the Apache License, Version 2.0; see LICENSE-JEmoji.txt in this folder.
+
+To update it, replace discord-emoji-definition.json with the latest version of that file.

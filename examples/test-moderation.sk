@@ -1,0 +1,38 @@
+# Moderation effects (APT-generated from actions/ModerationActions.java).
+#
+# Every DiSky effect is async and waits: the line after a ban only runs once Discord confirmed it,
+# so `await` is neither needed nor accepted here.
+
+on message receive seen by "test-bot":
+    if discord content of event-message is "!kick":
+        kick event-member because of "asked for it"
+
+    if discord content of event-message is "!ban":
+        ban event-member and delete 1 day worth of messages because of "spam"
+
+    if discord content of event-message is "!ban-id":
+        ban user id "000000000000000000" from event-guild due to "ban evasion"
+
+    if discord content of event-message is "!unban":
+        unban event-user from event-guild
+
+    if discord content of event-message is "!timeout":
+        time out event-member for 10 minutes because of "flooding"
+
+    if discord content of event-message is "!timeout-until":
+        time out event-member until now + 1 hour
+
+    if discord content of event-message is "!untimeout":
+        remove the time out of event-member
+
+# Voice moderation. The member has to be connected for any of these to apply.
+on member voice channel join seen by "test-bot":
+    mute event-member
+    deafen event-member
+    disconnect event-member
+
+# The reason is spelled the same way on every effect that supports one (it is an audit-log field, not
+# an argument), and is always optional.
+on message receive seen by "test-bot":
+    if discord content of event-message is "!quiet-kick":
+        kick event-member

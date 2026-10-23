@@ -1,0 +1,22 @@
+# Getters-by-id family (DiSky V5)
+# Without await -> cache lookup. With await -> online retrieve (safe off-thread).
+
+command /getterstest:
+    trigger:
+        # Bot-scoped, cache only (single loaded bot resolved automatically)
+        set {_role} to role with id "123456789"
+        set {_guild} to guild with id "987654321"
+        set {_channel} to text channel with id "111111111"
+
+        # Bot-scoped, cache vs retrieve via await
+        set {_user} to user with id "222222222"            # cache
+        await set {_user} to user with id "222222222"      # REST retrieve
+
+        # Guild-scoped (mandatory scope) - the type keyword is optional ("in {_guild}" or "in guild {_guild}")
+        set {_member} to member with id "333" in {_guild}           # cache
+        await set {_member} to member with id "333" in {_guild}     # REST retrieve
+        set {_event} to scheduled event with id "444" in {_guild}
+
+        # Retrieve-only getters (these REQUIRE await); a text channel is a message channel
+        await set {_rule} to automod rule with id "555" in {_guild}
+        await set {_msg} to message with id "666" in {_channel}

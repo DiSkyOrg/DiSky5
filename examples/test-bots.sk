@@ -1,0 +1,89 @@
+# ============================================================================
+#  DiSky V5 — bot definition + sharding test
+#
+#  Tests: minimal bot, bot with options, sharded bot, multi-bot, reading
+#  bot properties, the once-per-bot lifecycle events (even when sharded), the
+#  `seen by` filter on a sharded bot, and a clean phase-violation error.
+#
+#  Pass a real bot token as the command argument. /bot-sharded needs a token
+#  whose bot is in enough guilds for Discord to allow >=2 shards (or use the
+#  recommended count). Reload-safe: re-running logs a fresh bot of that name.
+# ============================================================================
+
+# --- 1. minimal bot (imperative API) ---------------------------------------
+command /bot-minimal <string>:
+    trigger:
+        set {_bot} to a new discord bot
+        set token of {_bot} to arg-1
+        login {_bot} as "minimal"
+        send "&7Logging in 'minimal'..."
+
+# --- 2. bot with options ---------------------------------------------------
+command /bot-options <string>:
+    trigger:
+        set {_bot} to a new discord bot
+        set token of {_bot} to arg-1
+        set intents of {_bot} to "default intents"
+        set member cache policy of {_bot} to "all"
+        set cache flags of {_bot} to "activity, voice_state, online_status"
+        set compression of {_bot} to "zlib"
+        set activity of {_bot} to "with Skript"
+        set online status of {_bot} to dnd
+        login {_bot} as "options"
+        send "&7Logging in 'options'..."
+
+# --- 3. sharded bot --------------------------------------------------------
+command /bot-sharded <string>:
+    trigger:
+        set {_bot} to a new discord bot
+        set token of {_bot} to arg-1
+        set shard count of {_bot} to 2            # force 2 shards
+        # set shard count of {_bot} to recommended shard count   # or let Discord decide
+        login {_bot} as "sharded"
+        send "&7Logging in 'sharded' (2 shards)..."
+
+# --- 4. read bot properties (works the same whatever the shard count) ------
+command /bot-info <string>:
+    trigger:
+        set {_bot} to the bot named arg-1
+        if {_bot} is not set:
+            send "&cNo loaded bot named '%arg-1%'."
+            stop
+        send "&ename: &7%name of {_bot}%"
+        send "&eshards: &7%running shards of {_bot}%/%shard count of {_bot}%"
+        send "&egateway ping: &7%gateway ping of {_bot}%ms   &eguilds: &7%guild count of {_bot}%"
+        send "&eself user: &7%self user of {_bot}%"
+        send "&eintents: &7%intents of {_bot}%"
+        send "&ecache flags: &7%cache flags of {_bot}%   &epolicy: &7%member cache policy of {_bot}%"
+
+# --- 5. multi-bot: list everything loaded ----------------------------------
+command /bots-list:
+    trigger:
+        send "&e%number of (all bots)% bot(s) loaded:"
+        loop all bots:
+            send "&7- %name of loop-value% (%running shards of loop-value% shards)"
+
+# --- 6. phase violation → readable Skript error, NOT a raw stacktrace ------
+command /bot-badphase <string>:
+    trigger:
+        set {_bot} to the bot named arg-1
+        if {_bot} is set:
+            set shard count of {_bot} to 8        # running bot → clean error in console
+            send "&7(check console: 'shard count can't be changed on a running bot...')"
+
+# ============================================================================
+#  Lifecycle — global events, fired ONCE per logical bot (even when sharded)
+# ============================================================================
+
+on bot loaded:
+    send "[DiSky] &a%event-bot% READY &7(%running shards of event-bot% shard(s), %guild count of event-bot% guilds)" to console
+
+on bot shutdown:
+    send "[DiSky] &c%event-bot% SHUTDOWN" to console
+
+on guild ready:
+    send "[DiSky] &bguild ready: %name of event-guild% on %event-bot%" to console
+
+# --- seen-by filter on a (possibly sharded) bot ----------------------------
+on message received seen by "sharded":
+    send "[DiSky] &dsharded-bot saw a message from %event-user% in %event-channel%" to console

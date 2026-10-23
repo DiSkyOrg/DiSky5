@@ -1,0 +1,30 @@
+# Builders: configure locally, send once.
+#
+# A builder is a pending Discord request. Setting its properties costs nothing (no request leaves),
+# and `the build result of` is the single line that talks to Discord. Because it blocks, it is only usable
+# under `await`; writing it without one is a parse error, not a silent freeze.
+
+on message receive seen by "test-bot":
+    if discord content of event-message is "!make-role":
+        set {_b} to a new role builder named "Moderator" in event-guild
+        set color of {_b} to orange
+        set hoisted of {_b} to true
+        set mentionable of {_b} to false
+
+        # Nothing has been created yet at this point.
+        await set {_role} to the build result of {_b}
+
+        # `the built role from {_b}` is the same expression, spelled for readability.
+        broadcast "created %name of {_role}%"
+
+# Only what JDA freezes at creation lives in the factory pattern: a role's guild comes from
+# Guild#createRole(), so it can never be a property, and Discord requires the name.
+#
+# Reading a builder property gives <none>: a pending request has no getters. The readable side of
+# `color` is the live role, and both share the same `color of %role/roleaction%` syntax.
+on message receive seen by "test-bot":
+    if discord content of event-message is "!reuse":
+        set {_b} to a new role builder named "Temp" in event-guild
+        # Building twice creates two roles: a builder is a template, not a memoised result.
+        await set {_first} to the build result of {_b}
+        await set {_second} to the build result of {_b}

@@ -1,0 +1,14 @@
+name: DiSky
+version: '${version}'
+
+main: net.itsthesky.disky5.DiSky5
+# 1.21.5 is the floor Skript 2.16 itself declares, and DiSky cannot run without Skript. It was
+# '1.13' (inherited from V4), which put Bukkit in legacy-material mode for no reason and blocked
+# the move to a modern Paper.
+api-version: '1.21.5'
+load: POSTWORLD
+
+depend: [ Skript ]
+
+authors: [ ItsTheSky ]
+website: disky.me

@@ -1,0 +1,123 @@
+# Discord commands (2026-09-09): the 'discord command' structure, its entries, argument resolution,
+# the 'discord command used' / 'failed' events and the argument expressions.
+#
+# The dispatcher ignores bots, so every command here needs a human typing it in the test guild.
+# Expected: one reply per command, one [CMD] line in the console.
+
+discord command ping:
+    prefixes: "!"
+    aliases: p, pong
+    description: replies pong
+    category: test
+    trigger:
+        reply with "pong (prefix=%used prefix%, alias=%used alias%)"
+        send "[CMD] PASS ping prefix=%used prefix% alias=%used alias% args='%used arguments%'" to console
+
+# no 'prefixes': the bare word matches
+discord command hello <user> [<n: number = 1>]:
+    usage message: "Usage: %usage of event-discordcommand%"
+    trigger:
+        reply with "Hello %arg-1% x%{_n}% (%user argument%, %number argument%)"
+        send "[CMD] PASS hello user=%arg-1% n=%{_n}% last=%last argument% all=%arguments%" to console
+
+discord command echo <text>:
+    prefixes: "!"
+    trigger:
+        reply with "you said: %arg-1%"
+        send "[CMD] PASS echo '%arg-1%'" to console
+
+discord command entities <role> <textchannel> [<who: member>]:
+    prefixes: "!"
+    usage message: "Usage: %usage of event-discordcommand%"
+    trigger:
+        reply with "role=%arg-1% channel=%arg-2% member=%{_who}%"
+        send "[CMD] PASS entities role=%arg-1% channel=%arg-2% member=%{_who}%" to console
+
+discord command quote <message>:
+    prefixes: "!"
+    usage message: "Usage: %usage of event-discordcommand% (id or jump link)"
+    trigger:
+        reply with "quoted: %discord content of arg-1%"
+        send "[CMD] PASS quote '%discord content of arg-1%'" to console
+
+discord command many <users>:
+    prefixes: "!"
+    trigger:
+        reply with "%size of arguments% users: %arg-1%"
+        send "[CMD] PASS many %arg-1%" to console
+
+discord command dmonly:
+    prefixes: "!"
+    executable in: dm
+    trigger:
+        reply with "this only works in DMs"
+        send "[CMD] PASS dmonly" to console
+
+discord command admin:
+    prefixes: "!"
+    permissions: administrator
+    permission message: "You need to be an administrator, %event-user%."
+    trigger:
+        reply with "you are an admin"
+        send "[CMD] PASS admin" to console
+
+discord command vip:
+    prefixes: "!"
+    roles: VIP, 1335575588307734528
+    trigger:
+        reply with "you have the role"
+        send "[CMD] PASS vip" to console
+
+discord command slow:
+    prefixes: "!"
+    cooldown: 10 seconds
+    cooldown message: "Wait %remaining cooldown% before using %name of event-discordcommand% again."
+    trigger:
+        reply with "slow command used"
+        send "[CMD] PASS slow" to console
+
+discord command guildslow:
+    prefixes: "!"
+    cooldown: 10 seconds
+    cooldown scope: guild
+    trigger:
+        reply with "guild-wide cooldown started"
+        send "[CMD] PASS guildslow" to console
+
+discord command blocked:
+    prefixes: "!"
+    trigger:
+        reply with "this should never run"
+        send "[CMD] FAIL blocked ran despite cancel" to console
+
+discord command onlyminimal:
+    prefixes: "!"
+    bots: minimal
+    trigger:
+        reply with "handled by %event-bot%"
+        send "[CMD] PASS onlyminimal by %event-bot%" to console
+
+discord command list:
+    prefixes: "!"
+    trigger:
+        set {_lines::*} to ""
+        loop all discord commands:
+            add "%name of loop-value% [%category of loop-value%]: %usage of loop-value% (aliases %aliases of loop-value%, prefixes %prefixes of loop-value%, cooldown %cooldown of loop-value%)" to {_lines::*}
+        reply with join {_lines::*} with nl
+        send "[CMD] PASS list %size of all discord commands% commands" to console
+
+on discord command used:
+    send "[CMD] used %name of event-discordcommand% by %event-user% in %event-channel% (guild=%event-guild%) prefix='%used prefix%' alias=%used alias% args='%used arguments%'" to console
+    if name of event-discordcommand is "blocked":
+        cancel event
+        reply with "blocked by 'on discord command used'"
+        send "[CMD] PASS blocked cancelled" to console
+
+on discord command failed:
+    send "[CMD] failed %name of event-discordcommand%: %failure reason% (remaining %remaining cooldown%)" to console
+    if failure reason is "wrong channel":
+        reply with "wrong channel for %name of event-discordcommand%"
+    if failure reason is "missing role":
+        reply with "you lack the role for %name of event-discordcommand%"
+    if failure reason is "wrong bot":
+        reply with "not for %event-bot%"

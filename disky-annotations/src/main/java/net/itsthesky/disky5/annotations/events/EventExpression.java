@@ -1,0 +1,10 @@
+package net.itsthesky.disky5.annotations.events;
+
+import java.lang.annotation.*;
+
+@Retention(RetentionPolicy.SOURCE)
+@Target(ElementType.METHOD)
+public @interface EventExpression {
+
+    String value();
+}

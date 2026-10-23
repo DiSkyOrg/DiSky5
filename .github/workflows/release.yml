@@ -1,0 +1,84 @@
+name: release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - uses: gradle/actions/wrapper-validation@v6
+
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - uses: gradle/actions/setup-gradle@v6
+
+      - name: Check the tag against gradle.properties
+        run: |
+          version=$(grep '^version=' gradle.properties | cut -d= -f2 | tr -d '[:space:]')
+          if [ "v$version" != "$GITHUB_REF_NAME" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME does not match version=$version in gradle.properties"
+            exit 1
+          fi
+          case "$version" in
+            *-a*) channel=alpha ;;
+            *-b*) channel=beta ;;
+            *)    channel=release ;;
+          esac
+          echo "VERSION=$version" >> "$GITHUB_ENV"
+          echo "CHANNEL=$channel" >> "$GITHUB_ENV"
+
+      - name: Build
+        run: ./gradlew build --no-daemon
+
+      - name: Changelog
+        id: changelog
+        run: |
+          bash .github/scripts/changelog.sh "$GITHUB_REF_NAME" > CHANGELOG.md
+          cat CHANGELOG.md >> "$GITHUB_STEP_SUMMARY"
+          {
+            echo 'text<<CHANGELOG_EOF'
+            cat CHANGELOG.md
+            echo 'CHANGELOG_EOF'
+          } >> "$GITHUB_OUTPUT"
+
+      - name: GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          flags=()
+          [ "$CHANNEL" != release ] && flags+=(--prerelease)
+          gh release create "$GITHUB_REF_NAME" "build/libs/DiSky-$VERSION.jar" \
+            --title "DiSky $VERSION" --notes-file CHANGELOG.md --verify-tag "${flags[@]}"
+
+      - name: Modrinth
+        uses: cloudnode-pro/modrinth-publish@v2
+        with:
+          token: ${{ secrets.MODRINTH_TOKEN }}
+          project: 4KA72Zn8
+          version: ${{ env.VERSION }}
+          name: DiSky ${{ env.VERSION }}
+          # Inferred from the version otherwise, and "-b1" contains neither "beta" nor "rc".
+          channel: ${{ env.CHANNEL }}
+          changelog: ${{ steps.changelog.outputs.text }}
+          loaders: |-
+            paper
+            purpur
+          # Skript 2.16 refuses to load below 1.21.5.
+          game-versions: '>=1.21.5'
+          files: build/libs/DiSky-${{ env.VERSION }}.jar
+          dependencies: '[{"project_id": "xFNYAvMk", "dependency_type": "required"}]'

@@ -1,0 +1,153 @@
+# Effects added in the 2026-08-27 pass (actions/{Message,Thread,Role,Guild,Bot}Actions.java).
+#
+# Every DiSky effect is async and waits: the next line only runs once Discord confirmed, so `await`
+# is neither needed nor accepted here. One command per effect, so a parse error names exactly one.
+
+# ---------------------------------------------------------------------------------------------
+# Messages
+# ---------------------------------------------------------------------------------------------
+
+on message receive seen by "test-bot":
+    if discord content of event-message is "!post":
+        post "plain text from DiSky" to event-channel
+
+    if discord content of event-message is "!post-embed":
+        set {_e} to a new discord embed
+        set title of {_e} to "posted embed"
+        set description of {_e} to "sent with the post effect"
+        post {_e} to event-channel
+
+    if discord content of event-message is "!dispatch":
+        # `dispatch` is the same effect, spelled differently.
+        dispatch "dispatched" in event-channel
+
+    if discord content of event-message is "!edit":
+        set {_m} to a new message with content "before" in event-channel
+        await set {_sent} to the build result of {_m}
+        edit {_sent} to show "after"
+
+    if discord content of event-message is "!edit-embed":
+        set {_m} to a new message with content "will get an embed" in event-channel
+        await set {_sent} to the build result of {_m}
+        set {_e} to a new discord embed
+        set description of {_e} to "edited into an embed"
+        edit {_sent} with {_e}
+
+    if discord content of event-message is "!pin":
+        pin event-message
+
+    if discord content of event-message is "!unpin":
+        unpin event-message
+
+    if discord content of event-message is "!publish":
+        # Announcement/news channels only; anywhere else this raises a readable Discord error.
+        publish event-message
+
+    if discord content of event-message is "!typing":
+        show typing status in event-channel
+
+    if discord content of event-message is "!forward":
+        forward event-message to event-channel
+
+    if discord content of event-message is "!suppress-embeds":
+        suppress the embeds of event-message
+
+    if discord content of event-message is "!end-poll":
+        # Only valid on a message that carries a poll.
+        end the poll of event-message
+
+# Purge takes a list. Grab a few messages first, then delete them in one bulk call.
+on message receive seen by "test-bot":
+    if discord content of event-message is "!purge":
+        await set {_msgs::*} to pinned messages of event-channel
+        purge {_msgs::*}
+
+# Reactions: `%emotes%` is a custom emoji, and the user filter is optional.
+on message receive seen by "test-bot":
+    if discord content of event-message is "!suppress-reaction":
+        await set {_emotes::*} to emotes of event-guild
+        suppress {_emotes::1} from event-message
+
+    if discord content of event-message is "!suppress-reaction-of":
+        await set {_emotes::*} to emotes of event-guild
+        suppress {_emotes::1} of event-user from event-message
+
+    if discord content of event-message is "!react":
+        react to event-message with "✅"
+
+    if discord content of event-message is "!react-emote":
+        await set {_emotes::*} to emotes of event-guild
+        react to event-message with {_emotes::1}
+
+# Reply: the target is the event itself (its channel, or the interaction being answered).
+on message receive seen by "test-bot":
+    if discord content of event-message is "!reply":
+        reply with "replied in the event channel"
+
+    if discord content of event-message is "!reply-ref":
+        reply with "replied with a reference" with reference event-message
+
+    if discord content of event-message is "!reply-embed":
+        set {_e} to a new discord embed
+        set description of {_e} to "replied embed"
+        reply with {_e}
+
+on slash command seen by "test-bot":
+    if used slash command is "ping":
+        reply with hidden "pong (only you see this)"
+
+# ---------------------------------------------------------------------------------------------
+# Threads
+# ---------------------------------------------------------------------------------------------
+
+on message receive seen by "test-bot":
+    if discord content of event-message is "!thread-lifecycle":
+        set {_t} to a new thread builder named "effects-test" in event-channel
+        await set {_thread} to the build result of {_t}
+
+        lock {_thread} because of "testing"
+        unlock {_thread}
+        archive {_thread} due to "testing"
+        unarchive {_thread}
+
+# ---------------------------------------------------------------------------------------------
+# Roles
+# ---------------------------------------------------------------------------------------------
+
+on message receive seen by "test-bot":
+    if discord content of event-message is "!move-roles":
+        set {_a} to role with id "000000000000000000"
+        set {_b} to role with id "111111111111111111"
+
+        move discord role {_a} above {_b}
+        move discord role {_a} under {_b}
+        move discord role {_a} up
+        move discord role {_a} down 2 times
+
+# ---------------------------------------------------------------------------------------------
+# Guild / entities
+# ---------------------------------------------------------------------------------------------
+
+on message receive seen by "test-bot":
+    if discord content of event-message is "!destroy-role":
+        set {_r} to role with id "000000000000000000"
+        destroy {_r}
+
+    if discord content of event-message is "!destroy-message":
+        destroy event-message
+
+    if discord content of event-message is "!leave":
+        # Careful: this really makes the bot leave the guild.
+        make event-bot leave event-guild
+
+# ---------------------------------------------------------------------------------------------
+# Bot / voice
+# ---------------------------------------------------------------------------------------------
+
+on message receive seen by "test-bot":
+    if discord content of event-message is "!connect":
+        set {_vc} to voice channel with id "000000000000000000"
+        connect event-bot to {_vc}
+
+    if discord content of event-message is "!disconnect":
+        disconnect event-bot from event-guild

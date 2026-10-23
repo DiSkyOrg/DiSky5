@@ -1,0 +1,33 @@
+# Embed type, properties and constructors (DiSky V5)
+#
+# The embed/field types and their properties are APT-generated from the EmbedType / EmbedFieldType
+# descriptors. The color/description/author properties are cross-type unions (shared with role,
+# scheduled event and message), so they read "color of %embedbuilder%", not "embed color".
+
+command /embedtest:
+	trigger:
+		# Build a fresh in-memory embed and set its properties.
+		set {_embed} to a new discord embed
+		set title of {_embed} to "DiSky V5"
+		set title url of {_embed} to "https://disky.me"
+		set description of {_embed} to "An embed built entirely in Skript."
+		set color of {_embed} to orange
+		set author of {_embed} to "DiSky"
+		set author icon of {_embed} to "https://disky.me/icon.png"
+		set footer of {_embed} to "Powered by DiSky"
+		set image of {_embed} to "https://disky.me/banner.png"
+		set thumbnail of {_embed} to "https://disky.me/thumb.png"
+		set timestamp of {_embed} to now
+
+		# Build a field and add it to the embed's fields.
+		set {_field} to a new embed field named "Status" with value "OK" inline
+		add {_field} to fields of {_embed}
+		add (a new field named "Latency" with value "42ms") to fields of {_embed}
+
+		# Read back what JDA actually exposes on an EmbedBuilder.
+		send "Description: %description of {_embed}%" to console
+		send "Field count: %size of (fields of {_embed})%" to console
+
+		# Read the field properties (read-only).
+		loop fields of {_embed}:
+			send "Field %name of loop-value% = %value of loop-value% (inline: %inline of loop-value%)" to console

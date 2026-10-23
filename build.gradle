@@ -1,0 +1,107 @@
+plugins {
+    id 'java-library'
+    id 'xyz.jpenilla.run-paper' version '3.0.2'
+    id 'com.gradleup.shadow' version '8.3.5'
+}
+
+repositories {
+    mavenCentral()
+    maven { url 'https://repo.papermc.io/repository/maven-public/' }
+    maven { url 'https://jitpack.io' }
+    maven { url 'https://repo.skriptlang.org/releases' }
+    maven { url 'https://m2.dv8tion.net/releases' }
+    maven { url 'https://repo.faststats.dev/releases' }
+}
+
+dependencies {
+    compileOnly 'io.papermc.paper:paper-api:1.21.1-R0.1-SNAPSHOT'
+    // Skript 2.16.1, built from the local fork (SkriptSky, branch feat/new-type-properties): it
+    // carries the approved-but-unmerged PR that makes `color` a native type property
+    // (Property.COLOR + PropExprColor, replacing the legacy ExprColorOf). That is what lets DiSky
+    // co-own `color of %role%` instead of losing to a competing core expression. Swap back to the
+    // published artifact once the PR ships.
+    compileOnly files('libs/Skript-2.16.1-typeproperties.jar')
+    compileOnly 'org.jetbrains:annotations:26.1.0'
+
+    implementation 'net.dv8tion:JDA:6.7.0'
+    implementation "dev.faststats.metrics:bukkit:0.26.1"
+
+    compileOnly project(':disky-annotations')
+    annotationProcessor project(':disky-processor')
+
+    // compileOnly is not inherited by the test compile classpath: repeat what the tests need.
+    // Paper and Skript are testImplementation (not testCompileOnly) because some runtime classes are
+    // Bukkit-typed and are exercised for real: DiSkyRuntimeHandler keys its try/catch buffer by Event.
+    testImplementation 'io.papermc.paper:paper-api:1.21.1-R0.1-SNAPSHOT'
+    testImplementation files('libs/Skript-2.16.1-typeproperties.jar')
+    testCompileOnly 'org.jetbrains:annotations:26.1.0'
+
+    testImplementation platform('org.junit:junit-bom:5.11.4')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testImplementation 'org.mockito:mockito-core:5.24.0'
+    testImplementation 'org.assertj:assertj-core:3.26.3'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+java {
+    toolchain {
+        // Java 21 (not 25): Paper 1.21.x runs on 21, and its runtime plugin remapper (AutoRenamingTool
+        // + ASM) cannot read class-file major 69 (Java 25). Targeting 21 keeps the shaded plugin
+        // loadable on Paper even when the server JVM itself is 25.
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+tasks.named('runServer') {
+    minecraftVersion('1.21.1')
+    jvmArgs('-Xms2G', '-Xmx2G')
+}
+
+tasks.named('processResources') {
+    def props = [version: project.version]
+    inputs.properties(props)
+    filesMatching('plugin.yml') {
+        expand(props)
+    }
+}
+
+tasks.named('shadowJar') {
+    archiveClassifier.set('')
+    // Relocate JDA's bundled deps to avoid clashes inside the server JVM.
+}
+
+// The shaded jar is the artifact, so the thin one must not claim the same file name. Both tasks used
+// to write build/libs/DiSky-<version>.jar and whichever ran last won: `build` could leave a 1 MB jar
+// with no JDA and no faststats in it, which fails at plugin load with NoClassDefFoundError. It also
+// made Gradle attribute that path to shadowJar when another module consumed project(':').
+tasks.named('jar') {
+    archiveClassifier.set('thin')
+}
+
+// The processor collapses `X.Y.Z-aN` @since values to `X.Y.Z` once the build is past that alpha series.
+tasks.named('compileJava') {
+    options.compilerArgs << "-Adisky.version=${project.version}"
+}
+
+// Per-generated-class notes from the annotation processor: ./gradlew compileJava -PdiskyVerbose
+if (providers.gradleProperty('diskyVerbose').isPresent()) {
+    tasks.named('compileJava') {
+        options.compilerArgs << '-Adisky.verbose=true'
+    }
+}
+
+// Rewrite the golden manifest instead of asserting against it: ./gradlew test -PupdateGolden
+def updateGolden = providers.gradleProperty('updateGolden').isPresent()
+
+tasks.named('test') {
+    useJUnitPlatform()
+    systemProperty 'disky.golden.update', updateGolden.toString()
+    testLogging {
+        events 'failed'
+        exceptionFormat 'full'
+    }
+}
+
+tasks.named('build') {
+    dependsOn(tasks.named('shadowJar'))
+}

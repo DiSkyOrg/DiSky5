@@ -1,0 +1,1 @@
+gradle.beforeProject { p -> p.layout.buildDirectory.set(p.file("build_ci")) }

@@ -1,0 +1,55 @@
+plugins {
+    id 'java-library'
+}
+
+group   = 'net.itsthesky'
+version = '5.0.0'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+repositories {
+    mavenCentral()
+    maven { url 'https://m2.dv8tion.net/releases' }
+    maven { url 'https://repo.skriptlang.org/releases' }
+    maven { url 'https://jitpack.io' }
+    maven { url 'https://repo.papermc.io/repository/maven-public/' }
+    maven { url 'https://repo.faststats.dev/releases' }
+}
+
+dependencies {
+    implementation project(':disky-annotations')
+    implementation 'com.squareup:javapoet:1.13.0'
+    compileOnly 'net.dv8tion:JDA:6.7.0'
+    compileOnly 'com.google.auto.service:auto-service-annotations:1.1.1'
+    annotationProcessor 'com.google.auto.service:auto-service:1.1.1'
+
+    // compile-testing runs javac in-process; the descriptors under test reference JDA, and the
+    // sources the processor emits reference Skript, so both must be on the test classpath for a
+    // compilation to be judged successful rather than failing on missing symbols.
+    testImplementation 'com.google.testing.compile:compile-testing:0.24.0'
+    // The generated sources reference the DiSky runtime (api.async, api.syntax, core) and Bukkit, so
+    // both are needed for a test compilation to succeed rather than fail on missing symbols. Depending
+    // on the root project here is not a task cycle: its jar only needs this module's jar, never its
+    // tests.
+    testImplementation project(':')
+    testImplementation 'io.papermc.paper:paper-api:1.21.1-R0.1-SNAPSHOT'
+    testImplementation 'net.dv8tion:JDA:6.7.0'
+    testImplementation rootProject.files('libs/Skript-2.16.1-typeproperties.jar')
+    testImplementation 'org.jetbrains:annotations:26.1.0'
+
+    testImplementation platform('org.junit:junit-bom:5.11.4')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+    testLogging {
+        events 'failed'
+        exceptionFormat 'full'
+    }
+}

@@ -1,0 +1,219 @@
+# Components V1 + V2 (2026-09-08): buttons, dropdowns, rows, containers, modals, and the interaction
+# plumbing (defer, show modal, edit interaction components, replace component).
+#
+# This file covers the half that needs a human click. Type the command in the test guild, then click.
+# Expected: every click answers with a hidden reply or an edit, and the console gets one [COMP] line.
+
+on message receive seen by "minimal":
+    if discord content of event-message is "!comp-buttons":
+        try:
+            set {_yes} to a new success button with id "yes" named "Yes" with emoji "✅"
+            set {_no} to a new danger button with id "no" named "No"
+            set {_docs} to a new link button with url "https://disky.me" named "Docs"
+            set {_m} to a new message with content "Click one" in event-channel
+            add {_yes} to components of {_m}
+            add {_no} to components of {_m}
+            add {_docs} to components of {_m}
+            await set {_sent} to the build result of {_m}
+            send "[COMP] buttons sent: %size of discord components of {_sent}% components" to console
+        catch {_e::*}:
+            send "[COMP] FAIL buttons: %{_e::*}%" to console
+
+    if discord content of event-message is "!comp-dropdown":
+        try:
+            set {_d} to a new dropdown with id "color"
+            set placeholder of {_d} to "Pick colors"
+            set max range of {_d} to 2
+            add a new option with value "red" named "Red" with emoji "🔴" to options of {_d}
+            add a new option with value "green" named "Green" with description "like grass" to options of {_d}
+            add a new option with value "blue" named "Blue" to options of {_d}
+            set default values of {_d} to "blue"
+            set {_e} to a new entity dropdown with id "who" targeting users and roles
+            set placeholder of {_e} to "Pick someone"
+            set {_m} to a new message with content "Choose" in event-channel
+            add {_d} to components of {_m}
+            add {_e} to components of {_m}
+            await set {_sent} to the build result of {_m}
+            send "[COMP] dropdowns sent: %size of discord components of {_sent}% components" to console
+        catch {_e::*}:
+            send "[COMP] FAIL dropdown: %{_e::*}%" to console
+
+    if discord content of event-message is "!comp-modal":
+        try:
+            set {_open} to a new primary button with id "open-modal" named "Open the form"
+            post {_open} to event-channel
+            send "[COMP] modal opener sent" to console
+        catch {_e::*}:
+            send "[COMP] FAIL modal opener: %{_e::*}%" to console
+
+    if discord content of event-message is "!comp-selects":
+        try:
+            set {_users} to a new entity dropdown with id "users" targeting users
+            set placeholder of {_users} to "Pick up to 3 users"
+            set max range of {_users} to 3
+            add event-user to default values of {_users}
+            set {_roles} to a new entity dropdown with id "roles" targeting roles
+            set placeholder of {_roles} to "Pick a role"
+            set {_chans} to a new entity dropdown with id "chans" targeting channels
+            set channel types of {_chans} to text and voice
+            set placeholder of {_chans} to "Pick a text or voice channel"
+            set {_both} to a new entity dropdown with id "both" targeting users and roles
+            set placeholder of {_both} to "Users or roles"
+            set {_m} to a new message with content "Entity selects" in event-channel
+            set components of {_m} to {_users}, {_roles}, {_chans} and {_both}
+            await set {_sent} to the build result of {_m}
+            send "[COMP] selects sent: %size of discord components of {_sent}% components" to console
+        catch {_e::*}:
+            send "[COMP] FAIL selects: %{_e::*}%" to console
+
+    if discord content of event-message is "!comp-modal-2":
+        try:
+            set {_open} to a new primary button with id "open-modal-2" named "Open the big form"
+            post {_open} to event-channel
+            send "[COMP] modal 2 opener sent" to console
+        catch {_e::*}:
+            send "[COMP] FAIL modal 2 opener: %{_e::*}%" to console
+
+    if discord content of event-message is "!comp-gallery-upload":
+        try:
+            set {_f} to a new file upload from url "https://raw.githubusercontent.com/SkriptLang/Skript/master/src/main/resources/logo.png" named "logo.png"
+            set {_c} to a new container
+            add a new text display "gallery and file display from one upload" to components of {_c}
+            add a new media gallery with images {_f} to components of {_c}
+            set {_f2} to a new file upload from url "https://raw.githubusercontent.com/SkriptLang/Skript/master/README.md" named "readme.md"
+            add a new file display from file {_f2} to components of {_c}
+            set {_m} to a new message with content "" in event-channel
+            add {_c} to components of {_m}
+            await set {_sent} to the build result of {_m}
+            send "[COMP] gallery + file display from uploads sent (%size of discord attachments of {_sent}% attachments)" to console
+        catch {_e::*}:
+            send "[COMP] FAIL gallery upload: %{_e::*}%" to console
+
+    if discord content of event-message is "!comp-container":
+        try:
+            set {_c} to a new container
+            set accent color of {_c} to red
+            add a new text display "# Components V2" to components of {_c}
+            add a new large separator to components of {_c}
+            set {_s} to a new section with accessory (a new thumbnail from url "https://raw.githubusercontent.com/SkriptLang/Skript/master/src/main/resources/logo.png") with texts "**Section**" and "with a thumbnail"
+            add {_s} to components of {_c}
+            add a new media gallery with images "https://raw.githubusercontent.com/SkriptLang/Skript/master/src/main/resources/logo.png" to components of {_c}
+            set {_t} to a new text display "click to change me"
+            set unique id of {_t} to 42
+            add {_t} to components of {_c}
+            add a new secondary button with id "swap" named "Swap the text" to components of {_c}
+            post {_c} to event-channel
+            send "[COMP] container sent" to console
+        catch {_e::*}:
+            send "[COMP] FAIL container: %{_e::*}%" to console
+
+on button clicked seen by "minimal":
+    send "[COMP] button clicked: %clicked id% (label %label of event-button%)" to console
+    if clicked id is "open-modal":
+        try:
+            set {_m} to a new modal with id "form" titled "A small form"
+            set {_name} to a new short text input with id "name" labeled "Your name"
+            set placeholder of {_name} to "John"
+            set {_body} to a new paragraph text input with id "body" labeled "Message"
+            set description of {_body} to "anything"
+            set required of {_body} to false
+            set {_pick} to a new dropdown with id "pick"
+            set label of {_pick} to "Pick one"
+            add a new option with value "a" named "A" to options of {_pick}
+            add a new option with value "b" named "B" to options of {_pick}
+            add {_name} to components of {_m}
+            add {_body} to components of {_m}
+            add {_pick} to components of {_m}
+            show {_m}
+            send "[COMP] PASS modal shown" to console
+        catch {_e::*}:
+            send "[COMP] FAIL show modal: %{_e::*}%" to console
+        stop
+    if clicked id is "open-modal-2":
+        try:
+            set {_m} to a new modal with id "form-2" titled "The big form"
+            set {_up} to a new file upload input with id "proof" labeled "Screenshots"
+            set max range of {_up} to 2
+            set required of {_up} to false
+            set {_radio} to a new radio group with id "size" labeled "Size"
+            add a new option with value "s" named "Small" to options of {_radio}
+            add a new option with value "l" named "Large" with description "the big one" to options of {_radio}
+            set {_boxes} to a new checkbox group with id "toppings" labeled "Toppings"
+            add a new option with value "cheese" named "Cheese" to options of {_boxes}
+            add a new option with value "ham" named "Ham" to options of {_boxes}
+            add a new option with value "olives" named "Olives" to options of {_boxes}
+            set max range of {_boxes} to 2
+            set {_agree} to a new checkbox with id "agree" labeled "I agree"
+            set {_who} to a new entity dropdown with id "who" targeting users and roles
+            set label of {_who} to "Who is it for"
+            set required of {_who} to false
+            set components of {_m} to {_up}, {_radio}, {_boxes}, {_agree} and {_who}
+            show {_m}
+            send "[COMP] PASS modal 2 shown" to console
+        catch {_e::*}:
+            send "[COMP] FAIL show modal 2: %{_e::*}%" to console
+        stop
+    if clicked id is "swap":
+        try:
+            replace the component with unique id 42 in event-message with a new text display "swapped at %now%"
+            send "[COMP] PASS replace by unique id" to console
+        catch {_e::*}:
+            send "[COMP] FAIL replace by unique id: %{_e::*}%" to console
+        stop
+    if clicked id is "yes":
+        try:
+            defer the interaction and edit
+            set disabled of event-button to true
+            set label of event-button to "Clicked!"
+            edit interaction components with event-button
+            send "[COMP] PASS defer + edit interaction components" to console
+        catch {_e::*}:
+            send "[COMP] FAIL edit interaction components: %{_e::*}%" to console
+        stop
+    if clicked id is "no":
+        try:
+            set {_b} to event-button
+            set style of {_b} to secondary
+            set label of {_b} to "No (seen)"
+            replace the component with id "no" of event-message with {_b}
+            reply with hidden "Replaced the No button in place"
+            send "[COMP] PASS replace by id + hidden reply" to console
+        catch {_e::*}:
+            send "[COMP] FAIL replace by id: %{_e::*}%" to console
+
+on dropdown clicked seen by "minimal":
+    try:
+        reply with hidden "You picked: %selected values%"
+        send "[COMP] PASS dropdown click: %selected values% (placeholder %placeholder of event-dropdown%)" to console
+    catch {_e::*}:
+        send "[COMP] FAIL dropdown click: %{_e::*}%" to console
+
+on entity dropdown clicked seen by "minimal":
+    try:
+        defer the interaction hidden
+        reply with "You picked: %selected entities%"
+        send "[COMP] PASS entity dropdown click: %selected entities%" to console
+    catch {_e::*}:
+        send "[COMP] FAIL entity dropdown click: %{_e::*}%" to console
+
+on modal received seen by "minimal":
+    if received id is "form-2":
+        try:
+            set {_files::*} to uploaded files of file upload with id "proof"
+            set {_size} to value of radio group with id "size"
+            set {_tops::*} to values of checkbox group with id "toppings"
+            set {_agree} to value of checkbox with id "agree"
+            set {_who::*} to selected entities of entity dropdown with id "who"
+            reply with hidden "files=%{_files::*}% size=%{_size}% toppings=%{_tops::*}% agree=%{_agree}% who=%{_who::*}%"
+            send "[COMP] PASS modal 2 values: files=%size of {_files::*}% (%file name of {_files::*}%) size=%{_size}% toppings=%{_tops::*}% agree=%{_agree}% who=%{_who::*}%" to console
+        catch {_e::*}:
+            send "[COMP] FAIL modal 2 values: %{_e::*}%" to console
+        stop
+    try:
+        set {_name} to value of text input with id "name"
+        set {_body} to value of text input with id "body"
+        set {_pick::*} to values of dropdown with id "pick"
+        reply with hidden "name=%{_name}% body=%{_body}% pick=%{_pick::*}%"
+        send "[COMP] PASS modal values: name=%{_name}% body=%{_body}% pick=%{_pick::*}%" to console
+    catch {_e::*}:
+        send "[COMP] FAIL modal values: %{_e::*}%" to console
