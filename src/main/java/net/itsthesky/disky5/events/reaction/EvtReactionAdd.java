@@ -5,7 +5,8 @@ import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.MessageReaction;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.entities.channel.Channel;
-import net.dv8tion.jda.api.entities.emoji.EmojiUnion;
+import net.dv8tion.jda.api.entities.emoji.CustomEmoji;
+import net.dv8tion.jda.api.entities.emoji.Emoji;
 import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent;
 import net.itsthesky.disky5.annotations.docs.Documentation;
 import net.itsthesky.disky5.annotations.events.EventExpression;
@@ -26,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
         },
         examples = {
                 "on reaction add:",
-                "\treply with \"You added %event-emote%!\""
+                "\treply with \"You added %reaction emoji%!\""
         },
         since = "5.0.0-a1"
 )
@@ -53,8 +54,19 @@ public final class EvtReactionAdd {
     }
 
     @EventValue
-    public static EmojiUnion emoji(MessageReactionAddEvent event) {
+    public static Emoji emoji(MessageReactionAddEvent event) {
         return event.getEmoji();
+    }
+
+    // What a script reads: Skript parses "event-emoji" as a plural (its "us" -> "i" rule), so it never resolves.
+    @EventExpression("[the] reaction (emoji|emote)")
+    public static Emoji reactionEmoji(MessageReactionAddEvent event) {
+        return event.getEmoji();
+    }
+
+    @EventValue
+    public static @Nullable CustomEmoji emote(MessageReactionAddEvent event) {
+        return event.getEmoji() instanceof CustomEmoji custom ? custom : null;
     }
 
     @EventValue

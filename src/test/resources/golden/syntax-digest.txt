@@ -140,7 +140,9 @@ event-expr event-member-timeout-event | pattern=[member] timeout end | type=date
 event-expr event-message-command | pattern=(execute|use)[d] [message] command | type=text
 event-expr event-message-command | pattern=[the] target message | type=message
 event-expr event-modal-received | pattern=receive[d] (id|modal) | type=text
+event-expr event-reaction-add | pattern=[the] reaction (emoji|emote) | type=emoji
 event-expr event-reaction-add | pattern=[the] reaction message | type=message
+event-expr event-reaction-remove | pattern=[the] reaction (emoji|emote) | type=emoji
 event-expr event-reaction-remove | pattern=[the] reaction message | type=message
 event-expr event-reaction-remove-all | pattern=[the] reaction message | type=message
 event-expr event-role-add-event | pattern=added roles | type=role[]
@@ -551,7 +553,8 @@ event-value event-poll-vote-remove | name=messageId | type=number | time=present
 event-value event-poll-vote-remove | name=user | type=user | time=present
 event-value event-reaction-add | name=bot | type=bot | time=present
 event-value event-reaction-add | name=channel | type=channel | time=present
-event-value event-reaction-add | name=emoji | type=emojiunion | time=present
+event-value event-reaction-add | name=emoji | type=emoji | time=present
+event-value event-reaction-add | name=emote | type=emote | time=present
 event-value event-reaction-add | name=guild | type=guild | time=present
 event-value event-reaction-add | name=member | type=member | time=present
 event-value event-reaction-add | name=messageAuthorId | type=long | time=present
@@ -559,7 +562,8 @@ event-value event-reaction-add | name=reaction | type=messagereaction | time=pre
 event-value event-reaction-add | name=user | type=user | time=present
 event-value event-reaction-remove | name=bot | type=bot | time=present
 event-value event-reaction-remove | name=channel | type=channel | time=present
-event-value event-reaction-remove | name=emoji | type=emojiunion | time=present
+event-value event-reaction-remove | name=emoji | type=emoji | time=present
+event-value event-reaction-remove | name=emote | type=emote | time=present
 event-value event-reaction-remove | name=guild | type=guild | time=present
 event-value event-reaction-remove | name=member | type=member | time=present
 event-value event-reaction-remove | name=user | type=user | time=present
