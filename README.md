@@ -2,9 +2,10 @@
 
 DiSky is a [Skript](https://github.com/SkriptLang/Skript) addon for writing Discord bots in Skript, on your Minecraft server. It is built on [JDA](https://github.com/discord-jda/JDA): anything a JDA bot can do, DiSky aims to expose as Skript syntax.
 
-This branch is **DiSky 5**, a rewrite of DiSky 4. It is in public beta: most of DiSky 4 is covered, the syntax is close but not identical, and V4 scripts need a few changes (see [Coming from DiSky 4](#coming-from-disky-4)).
+This branch is **DiSky 5**, a rewrite of DiSky 4. It is in public beta: most of DiSky 4 is covered, the syntax is close but not identical, and V4 scripts need a few changes (see the [migration guide](https://atlas.disky.me/docs/migration)).
 
 - Syntax reference: [atlas.disky.me](https://atlas.disky.me)
+- Porting DiSky 4 scripts: [migration guide](https://atlas.disky.me/docs/migration)
 - Download: [Modrinth](https://modrinth.com/plugin/disky)
 - Bugs and requests: [GitHub issues](https://github.com/DiSkyOrg/DiSky5/issues)
 
@@ -121,15 +122,9 @@ await set {_role} to the build result of {_b}
 
 ## Coming from DiSky 4
 
-DiSky 5 replaces DiSky 4: same plugin name, same Modrinth page, and addons that depend on DiSky keep working by name. Scripts need a few changes:
+DiSky 5 replaces DiSky 4: same plugin name, same Modrinth page, and addons that depend on DiSky keep working by name. V4 scripts do not run as-is.
 
-- `retrieve X and store it in {_v}` becomes `await set {_v} to X`.
-- `create X and store it in {_v}` becomes a builder, then `await set {_v} to the build result of {_b}`.
-- Slash command structures no longer register themselves: send them from `on guild ready` (see the example above).
-- Some properties take a `discord` prefix where Skript already uses the word: `discord content`, `discord author`, `discord permissions`...
-- `define bot` still works, but `a new discord bot` + `login` is the recommended way.
-
-The full guide, with before/after examples and the list of what DiSky 5 no longer has, is on the Atlas: [Coming from DiSky 4](https://atlas.disky.me/docs/migration).
+**Read the [migration guide](https://atlas.disky.me/docs/migration) on the Atlas before switching a bot over.** It gives the order to port a script in, before/after examples for every change (`retrieve` becoming `await`, builders, the `discord` prefix, commands, components, events), and the list of what DiSky 5 does not have yet.
 
 ## Building from source
 
