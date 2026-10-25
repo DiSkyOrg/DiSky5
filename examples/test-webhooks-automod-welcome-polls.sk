@@ -22,6 +22,9 @@ options:
 	role: "1335575588307734528"
 
 on message receive seen by {@bot}:
+	# !t-conv replies with the message itself, i.e. "!t-conv": without this the bot re-runs it forever.
+	if event-user is a discord bot:
+		stop
 	set {_cmd} to discord content of event-message
 
 	# ---------------------------------------------------------------- converters

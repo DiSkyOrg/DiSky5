@@ -2,14 +2,13 @@ package net.itsthesky.disky5.events.channel;
 
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.channel.Channel;
-import net.dv8tion.jda.api.entities.channel.concrete.ThreadChannel;
 import net.dv8tion.jda.api.events.channel.update.ChannelUpdateAutoArchiveDurationEvent;
 import net.itsthesky.disky5.annotations.docs.Documentation;
 import net.itsthesky.disky5.annotations.events.EventTime;
 import net.itsthesky.disky5.annotations.events.EventValue;
 import net.itsthesky.disky5.annotations.events.SkriptEvent;
+import org.jetbrains.annotations.Nullable;
 
-// TODO: returns the native JDA AutoArchiveDuration enum; a Timespan conversion is a pending gap.
 @SkriptEvent(
         name = "Channel Auto Archive Duration Update Event",
         patterns = {"[discord] channel auto[( |-)]archive duration (change|update)"},
@@ -27,13 +26,13 @@ import net.itsthesky.disky5.annotations.events.SkriptEvent;
 public final class EvtChannelUpdateAutoArchiveDuration {
 
     @EventValue
-    public static ThreadChannel.AutoArchiveDuration newDuration(ChannelUpdateAutoArchiveDurationEvent event) {
-        return event.getNewValue();
+    public static @Nullable Number newDuration(ChannelUpdateAutoArchiveDurationEvent event) {
+        return event.getNewValue() == null ? null : event.getNewValue().getMinutes();
     }
 
     @EventValue(time = EventTime.PAST)
-    public static ThreadChannel.AutoArchiveDuration oldDuration(ChannelUpdateAutoArchiveDurationEvent event) {
-        return event.getOldValue();
+    public static @Nullable Number oldDuration(ChannelUpdateAutoArchiveDurationEvent event) {
+        return event.getOldValue() == null ? null : event.getOldValue().getMinutes();
     }
 
     @EventValue

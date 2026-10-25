@@ -1,6 +1,19 @@
 package net.itsthesky.disky5.core;
 
+import net.dv8tion.jda.api.entities.Activity;
+import net.dv8tion.jda.api.entities.Guild;
+import net.dv8tion.jda.api.entities.Invite;
+import net.dv8tion.jda.api.entities.Member;
+import net.dv8tion.jda.api.entities.Message;
+import net.dv8tion.jda.api.entities.Role;
+import net.dv8tion.jda.api.entities.ScheduledEvent;
+import net.dv8tion.jda.api.entities.User;
+import net.dv8tion.jda.api.entities.Webhook;
+import net.dv8tion.jda.api.entities.channel.Channel;
+import net.dv8tion.jda.api.entities.channel.forums.ForumTag;
 import net.dv8tion.jda.api.entities.emoji.Emoji;
+import net.dv8tion.jda.api.entities.messages.MessagePoll;
+import net.dv8tion.jda.api.entities.sticker.Sticker;
 import ch.njol.skript.util.Color;
 import ch.njol.skript.util.ColorRGB;
 import ch.njol.skript.util.Date;
@@ -34,9 +47,25 @@ public final class Conversions {
     }
 
     public static String display(@Nullable Object value) {
-        if (value instanceof Emoji emoji)
-            return emoji.getFormatted();
-        return String.valueOf(value);
+        // Same rendering as V4, so "%event-guild%" in a script still prints a name, not JDA's toString.
+        return switch (value) {
+            case Emoji emoji -> emoji.getFormatted();
+            case Message message -> message.getContentRaw();
+            case Member member -> member.getUser().getEffectiveName();
+            case User user -> user.getEffectiveName();
+            case Channel channel -> channel.getName();
+            case Guild guild -> guild.getName();
+            case Role role -> role.getName();
+            case ScheduledEvent event -> event.getName();
+            case Webhook webhook -> webhook.getName();
+            case ForumTag tag -> tag.getName();
+            case Sticker sticker -> sticker.getName();
+            case Activity activity -> activity.getName();
+            case Message.Attachment attachment -> attachment.getUrl();
+            case Invite invite -> invite.getUrl();
+            case MessagePoll poll -> poll.getQuestion().getText();
+            case null, default -> String.valueOf(value);
+        };
     }
 
     @Contract("null -> null")

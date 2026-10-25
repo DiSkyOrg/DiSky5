@@ -10,8 +10,9 @@ import net.itsthesky.disky5.annotations.events.EventValue;
 import net.itsthesky.disky5.annotations.events.SkriptEvent;
 
 import java.util.EnumSet;
+import java.util.List;
+import java.util.Locale;
 
-// TODO: returns the native EnumSet<ChannelFlag>; a lowercased-string list is a pending gap.
 @SkriptEvent(
         name = "Channel Flags Update Event",
         patterns = {"[discord] channel flags (change|update)"},
@@ -29,13 +30,13 @@ import java.util.EnumSet;
 public final class EvtChannelUpdateFlags {
 
     @EventExpression("new [channel] flags")
-    public static EnumSet<ChannelFlag> newFlags(ChannelUpdateFlagsEvent event) {
-        return event.getNewValue();
+    public static List<String> newFlags(ChannelUpdateFlagsEvent event) {
+        return names(event.getNewValue());
     }
 
     @EventExpression("old [channel] flags")
-    public static EnumSet<ChannelFlag> oldFlags(ChannelUpdateFlagsEvent event) {
-        return event.getOldValue();
+    public static List<String> oldFlags(ChannelUpdateFlagsEvent event) {
+        return names(event.getOldValue());
     }
 
     @EventValue
@@ -46,5 +47,9 @@ public final class EvtChannelUpdateFlags {
     @EventValue
     public static Channel channel(ChannelUpdateFlagsEvent event) {
         return event.getChannel();
+    }
+
+    private static List<String> names(EnumSet<ChannelFlag> flags) {
+        return flags.stream().map(f -> f.name().toLowerCase(Locale.ROOT).replace('_', ' ')).toList();
     }
 }

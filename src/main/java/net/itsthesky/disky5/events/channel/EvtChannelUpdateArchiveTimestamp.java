@@ -10,7 +10,6 @@ import net.itsthesky.disky5.annotations.events.SkriptEvent;
 
 import java.time.OffsetDateTime;
 
-// TODO: returns the native OffsetDateTime; a Skript Date conversion is a pending gap.
 @SkriptEvent(
         name = "Channel Archive Timestamp/Date Update Event",
         patterns = {"[discord] channel archive (timestamp|date) (change|update)"},

@@ -10,7 +10,6 @@ import net.itsthesky.disky5.annotations.events.EventValue;
 import net.itsthesky.disky5.annotations.events.SkriptEvent;
 import org.jetbrains.annotations.Nullable;
 
-// TODO: returns the native JDA Region; a String/Region Skript type + conversion is a pending gap.
 @SkriptEvent(
         name = "Channel Region Update Event",
         patterns = {"[discord] channel region (change|update)"},
@@ -28,13 +27,13 @@ import org.jetbrains.annotations.Nullable;
 public final class EvtChannelUpdateRegion {
 
     @EventValue
-    public static @Nullable Region newRegion(ChannelUpdateRegionEvent event) {
-        return event.getNewValue();
+    public static @Nullable String newRegion(ChannelUpdateRegionEvent event) {
+        return key(event.getNewValue());
     }
 
     @EventValue(time = EventTime.PAST)
-    public static @Nullable Region oldRegion(ChannelUpdateRegionEvent event) {
-        return event.getOldValue();
+    public static @Nullable String oldRegion(ChannelUpdateRegionEvent event) {
+        return key(event.getOldValue());
     }
 
     @EventValue
@@ -45,5 +44,10 @@ public final class EvtChannelUpdateRegion {
     @EventValue
     public static Channel channel(ChannelUpdateRegionEvent event) {
         return event.getChannel();
+    }
+
+    // Same as the channel's own `region` property: automatic is <none>. JDA maps a null rtc_region to UNKNOWN.
+    private static @Nullable String key(@Nullable Region region) {
+        return region == null || region == Region.AUTOMATIC || region == Region.UNKNOWN ? null : region.getKey();
     }
 }

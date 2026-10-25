@@ -99,8 +99,10 @@ event-expr event-application-command-cooldown | pattern=[the] remaining cooldown
 event-expr event-button-click | pattern=click[ed] (id|component id|button id) | type=text
 event-expr event-channel-applied-tags-update-event | pattern=new [applied] tags | type=forumtag[]
 event-expr event-channel-applied-tags-update-event | pattern=old [applied] tags | type=forumtag[]
-event-expr event-channel-flags-update-event | pattern=new [channel] flags | type=channelflag[]
-event-expr event-channel-flags-update-event | pattern=old [channel] flags | type=channelflag[]
+event-expr event-channel-default-reaction-update-event | pattern=new default reaction | type=emoji
+event-expr event-channel-default-reaction-update-event | pattern=old default reaction | type=emoji
+event-expr event-channel-flags-update-event | pattern=new [channel] flags | type=text[]
+event-expr event-channel-flags-update-event | pattern=old [channel] flags | type=text[]
 event-expr event-discord-command-failed | pattern=[the] failure reason | type=text
 event-expr event-discord-command-failed | pattern=[the] remaining cooldown | type=timespan
 event-expr event-discord-command-failed | pattern=[the] used alias | type=text
@@ -223,8 +225,8 @@ event-value event-channel-archived-update-event | name=oldArchived | type=boolea
 event-value event-channel-auto-archive-duration-update-event | name=bot | type=bot | time=present
 event-value event-channel-auto-archive-duration-update-event | name=channel | type=channel | time=present
 event-value event-channel-auto-archive-duration-update-event | name=guild | type=guild | time=present
-event-value event-channel-auto-archive-duration-update-event | name=newDuration | type=autoarchiveduration | time=present
-event-value event-channel-auto-archive-duration-update-event | name=oldDuration | type=autoarchiveduration | time=past
+event-value event-channel-auto-archive-duration-update-event | name=newDuration | type=number | time=present
+event-value event-channel-auto-archive-duration-update-event | name=oldDuration | type=number | time=past
 event-value event-channel-bitrate-update-event | name=bot | type=bot | time=present
 event-value event-channel-bitrate-update-event | name=channel | type=channel | time=present
 event-value event-channel-bitrate-update-event | name=guild | type=guild | time=present
@@ -241,8 +243,6 @@ event-value event-channel-default-layout-update-event | name=oldLayout | type=la
 event-value event-channel-default-reaction-update-event | name=bot | type=bot | time=present
 event-value event-channel-default-reaction-update-event | name=channel | type=channel | time=present
 event-value event-channel-default-reaction-update-event | name=guild | type=guild | time=present
-event-value event-channel-default-reaction-update-event | name=newReaction | type=emojiunion | time=present
-event-value event-channel-default-reaction-update-event | name=oldReaction | type=emojiunion | time=past
 event-value event-channel-default-sort-order-update-event | name=bot | type=bot | time=present
 event-value event-channel-default-sort-order-update-event | name=channel | type=channel | time=present
 event-value event-channel-default-sort-order-update-event | name=guild | type=guild | time=present
@@ -292,8 +292,8 @@ event-value event-channel-position-update-event | name=oldPosition | type=number
 event-value event-channel-region-update-event | name=bot | type=bot | time=present
 event-value event-channel-region-update-event | name=channel | type=channel | time=present
 event-value event-channel-region-update-event | name=guild | type=guild | time=present
-event-value event-channel-region-update-event | name=newRegion | type=region | time=present
-event-value event-channel-region-update-event | name=oldRegion | type=region | time=past
+event-value event-channel-region-update-event | name=newRegion | type=text | time=present
+event-value event-channel-region-update-event | name=oldRegion | type=text | time=past
 event-value event-channel-slowmode-update-event | name=bot | type=bot | time=present
 event-value event-channel-slowmode-update-event | name=channel | type=channel | time=present
 event-value event-channel-slowmode-update-event | name=guild | type=guild | time=present
