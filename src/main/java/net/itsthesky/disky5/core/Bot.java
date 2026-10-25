@@ -64,6 +64,12 @@ public final class Bot {
             throw new IllegalStateException("the bot '" + this.name + "' is already connected");
         if (token == null || token.isBlank())
             throw new IllegalStateException("a bot needs a token before login (set token of %bot% to ...)");
+
+        Bot previous = DiSky5.getBots().byName(name);
+        if (previous != null && previous != this && previous.state == State.RUNNING) {
+            DiSky5.getInstance().getLogger().info("A bot named '" + name + "' is already running; shutting it down before logging in the new one.");
+            previous.shutdown();
+        }
         this.name = name;
 
         DiSky5 plugin = DiSky5.getInstance();
@@ -157,11 +163,14 @@ public final class Bot {
     }
 
     public void setActivity(@Nullable String activity) {
-        Activity parsed = (activity == null || activity.isBlank()) ? null : Activity.playing(activity);
-        this.activity = parsed;
+        setActivity((activity == null || activity.isBlank()) ? null : Activity.playing(activity));
+    }
+
+    public void setActivity(@Nullable Activity activity) {
+        this.activity = activity;
         ShardManager manager = shardManager;
         if (state == State.RUNNING && manager != null)
-            manager.setActivity(parsed);
+            manager.setActivity(activity);
     }
 
     public void setOnlineStatus(OnlineStatus status) {
@@ -180,7 +189,7 @@ public final class Bot {
     public String getCacheFlags() { return String.join(", ", cacheFlags.stream().map(Enum::name).toList()); }
     public String getMemberCachePolicy() { return memberCachePolicyName; }
     public @Nullable String getCompression() { return compression == null ? null : compression.name(); }
-    public @Nullable String getActivity() { return activity == null ? null : activity.getName(); }
+    public @Nullable Activity getActivity() { return activity; }
     public @Nullable OnlineStatus getOnlineStatus() { return onlineStatus; }
 
     public int getShardCount() {

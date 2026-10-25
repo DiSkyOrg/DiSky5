@@ -1,6 +1,7 @@
 package net.itsthesky.disky5.core;
 
 import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.entities.Activity;
 import net.dv8tion.jda.api.entities.IMentionable;
 import net.dv8tion.jda.api.entities.ISnowflake;
 import net.dv8tion.jda.api.entities.Member;
@@ -39,6 +40,11 @@ public final class CoreConverters {
         if (snowflake instanceof IMentionable mentionable)
             return mentionable.getAsMention();
         return snowflake.getId();
+    }
+
+    @Converter
+    public static Activity stringToActivity(String text) {
+        return text.isBlank() ? null : Activity.playing(text);
     }
 
     @Comparator

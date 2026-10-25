@@ -58,6 +58,11 @@ public final class GuildType {
         return guild.getName();
     }
 
+    @Property.Setter(value = "name", shared = true)
+    public static RestAction<?> setName(Guild guild, String value) {
+        return guild.getManager().setName(value);
+    }
+
     @Property("afk channel")
     @Documentation(
             name = "Guild AFK Channel",

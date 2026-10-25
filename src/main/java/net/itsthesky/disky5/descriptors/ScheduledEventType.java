@@ -84,6 +84,11 @@ public final class ScheduledEventType {
         return event.getManager().setLocation(value);
     }
 
+    @Property.Setter("description")
+    public static RestAction<?> setDescription(ScheduledEvent event, @Nullable String value) {
+        return event.getManager().setDescription(value);
+    }
+
     @Property("start date")
     @Documentation(
             name = "Scheduled Event Start Date",
@@ -93,6 +98,11 @@ public final class ScheduledEventType {
     )
     public static Date startDate(ScheduledEvent event) {
         return Conversions.date(event.getStartTime());
+    }
+
+    @Property.Setter("start date")
+    public static RestAction<?> setStartDate(ScheduledEvent event, Date value) {
+        return event.getManager().setStartTime(Instant.ofEpochMilli(value.getTime()));
     }
 
     @Property("end date")
@@ -190,6 +200,11 @@ public final class ScheduledEventType {
     @Property(value = "name", shared = true)
     public static String discordName(ScheduledEvent event) {
         return event.getName();
+    }
+
+    @Property.Setter(value = "name", shared = true)
+    public static RestAction<?> setName(ScheduledEvent event, String value) {
+        return event.getManager().setName(value);
     }
 
     @Property(value = "guild", shared = true)

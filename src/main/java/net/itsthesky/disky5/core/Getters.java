@@ -2,7 +2,10 @@ package net.itsthesky.disky5.core;
 
 import net.dv8tion.jda.api.entities.*;
 import net.dv8tion.jda.api.entities.automod.AutoModRule;
+import net.dv8tion.jda.api.entities.channel.Channel;
 import net.dv8tion.jda.api.entities.channel.concrete.*;
+import net.dv8tion.jda.api.entities.channel.middleman.AudioChannel;
+import net.dv8tion.jda.api.entities.channel.middleman.GuildChannel;
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
 import net.dv8tion.jda.api.requests.RestAction;
 import net.dv8tion.jda.api.sharding.ShardManager;
@@ -38,6 +41,34 @@ public final class Getters {
         examples = "set {_g} to guild with id \"123\"", since = "5.0.0-a1")
     public static @Nullable Guild guild(ShardManager bot, String id) {
         return bot.getGuildById(id);
+    }
+
+    @Getter("channel")
+    @Documentation(name = "Channel With Id", description = "The channel of any kind with the given id, from cache.",
+        examples = "set {_c} to channel with id \"123\"", since = "5.0.0-b1")
+    public static @Nullable Channel channel(ShardManager bot, String id) {
+        return bot.getChannelById(Channel.class, id);
+    }
+
+    @Getter("guild channel")
+    @Documentation(name = "Guild Channel With Id", description = "The guild channel of any kind with the given id, from cache.",
+        examples = "set {_c} to guild channel with id \"123\"", since = "5.0.0-b1")
+    public static @Nullable GuildChannel guildChannel(ShardManager bot, String id) {
+        return bot.getGuildChannelById(id);
+    }
+
+    @Getter("message channel")
+    @Documentation(name = "Message Channel With Id", description = "The channel messages can be sent in (text, news, voice, thread, private...) with the given id, from cache.",
+        examples = "set {_c} to message channel with id \"123\"", since = "5.0.0-b1")
+    public static @Nullable MessageChannel messageChannel(ShardManager bot, String id) {
+        return bot.getChannelById(MessageChannel.class, id);
+    }
+
+    @Getter("audio channel")
+    @Documentation(name = "Audio Channel With Id", description = "The voice or stage channel with the given id, from cache.",
+        examples = "set {_c} to audio channel with id \"123\"", since = "5.0.0-b1")
+    public static @Nullable AudioChannel audioChannel(ShardManager bot, String id) {
+        return bot.getChannelById(AudioChannel.class, id);
     }
 
     @Getter("text channel")

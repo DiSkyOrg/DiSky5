@@ -24,6 +24,7 @@ import net.itsthesky.disky5.elements.effects.EffShutdownBot;
 import net.itsthesky.disky5.elements.expressions.ExprBots;
 import net.itsthesky.disky5.elements.expressions.ExprLastError;
 import net.itsthesky.disky5.elements.expressions.ExprModalValue;
+import net.itsthesky.disky5.elements.expressions.ExprActivity;
 import net.itsthesky.disky5.elements.expressions.ExprNewBot;
 import net.itsthesky.disky5.elements.expressions.ExprNewEmbed;
 import net.itsthesky.disky5.elements.expressions.ExprNewEmbedField;
@@ -111,6 +112,7 @@ public final class DiSky5 extends JavaPlugin {
                 EffAwait.register();
 
                 ExprNewBot.register();
+                ExprActivity.register();
                 EffLogin.register();
                 EffShutdownBot.register();
                 ExprRecommendedShardCount.register();

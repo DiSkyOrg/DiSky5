@@ -1,5 +1,6 @@
 package net.itsthesky.disky5.descriptors.channels;
 
+import net.dv8tion.jda.api.requests.RestAction;
 import net.dv8tion.jda.api.entities.channel.attribute.ISlowmodeChannel;
 import net.itsthesky.disky5.annotations.Property;
 import net.itsthesky.disky5.annotations.SkriptType;
@@ -19,5 +20,10 @@ public final class ISlowmodeChannelType {
     )
     public static int slowmode(ISlowmodeChannel channel) {
         return channel.getSlowmode();
+    }
+
+    @Property.Setter("slowmode")
+    public static RestAction<?> setSlowmode(ISlowmodeChannel channel, int value) {
+        return channel.getManager().setSlowmode(value);
     }
 }

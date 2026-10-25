@@ -1,5 +1,6 @@
 package net.itsthesky.disky5.descriptors;
 
+import net.dv8tion.jda.api.requests.RestAction;
 import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.entities.emoji.CustomEmoji;
 import net.dv8tion.jda.api.entities.emoji.RichCustomEmoji;
@@ -39,6 +40,13 @@ public final class EmojiType {
     @Property(value = "name", shared = true)
     public static String discordName(CustomEmoji emote) {
         return emote.getName();
+    }
+
+    @Property.Setter(value = "name", shared = true)
+    public static RestAction<?> setName(CustomEmoji emote, String value) {
+        if (!(emote instanceof RichCustomEmoji rich))
+            throw new IllegalStateException("Only a guild emote can be renamed.");
+        return rich.getManager().setName(value);
     }
 
     // Explicit patterns, not a PropertyCondition: that would derive the subject from the class

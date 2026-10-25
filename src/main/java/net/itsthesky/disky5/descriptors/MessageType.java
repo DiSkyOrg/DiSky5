@@ -9,6 +9,7 @@ import net.dv8tion.jda.api.entities.MessageReference;
 import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
+import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
 import net.dv8tion.jda.api.entities.channel.concrete.VoiceChannel;
 import net.dv8tion.jda.api.entities.emoji.CustomEmoji;
 import net.dv8tion.jda.api.entities.messages.MessagePoll;
@@ -160,6 +161,17 @@ public final class MessageType {
     )
     public static List<Role> mentionedRoles(Message message) {
         return message.getMentions().getRoles();
+    }
+
+    @Property("channel")
+    @Documentation(
+            name = "Message Channel",
+            description = "The channel the message was sent in (guild channel, thread or private channel).",
+            examples = "set {_c} to channel of {_message}",
+            since = "5.0.0-b1"
+    )
+    public static MessageChannel channel(Message message) {
+        return message.getChannel();
     }
 
     @Property("mentioned channels")

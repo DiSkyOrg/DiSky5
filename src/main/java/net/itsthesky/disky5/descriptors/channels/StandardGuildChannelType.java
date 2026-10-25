@@ -25,6 +25,11 @@ public final class StandardGuildChannelType {
         return channel.getPosition();
     }
 
+    @Property.Setter("channel position")
+    public static RestAction<?> setPosition(StandardGuildChannel channel, int value) {
+        return channel.getManager().setPosition(value);
+    }
+
     @Property("category")
     @Documentation(
             name = "Channel Category",

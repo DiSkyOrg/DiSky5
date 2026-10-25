@@ -51,6 +51,11 @@ public final class ThreadChannelType {
         return channel.isArchived();
     }
 
+    @Property.Setter("archived")
+    public static RestAction<?> setArchived(ThreadChannel channel, boolean value) {
+        return channel.getManager().setArchived(value);
+    }
+
     @Property("locked")
     @Documentation(
             name = "Thread Locked",
@@ -60,6 +65,11 @@ public final class ThreadChannelType {
     )
     public static boolean locked(ThreadChannel channel) {
         return channel.isLocked();
+    }
+
+    @Property.Setter("locked")
+    public static RestAction<?> setLocked(ThreadChannel channel, boolean value) {
+        return channel.getManager().setLocked(value);
     }
 
     @Property.Retrieve("thread members")

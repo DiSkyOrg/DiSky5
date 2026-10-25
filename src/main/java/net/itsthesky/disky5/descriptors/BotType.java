@@ -2,6 +2,7 @@ package net.itsthesky.disky5.descriptors;
 
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.OnlineStatus;
+import net.dv8tion.jda.api.entities.Activity;
 import net.dv8tion.jda.api.entities.ApplicationInfo;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.User;
@@ -72,11 +73,13 @@ public final class BotType {
     public static void setShardCount(Bot bot, int count) { bot.setShardCount(count); }
 
     @Property("activity")
-    @Documentation(name = "Bot Activity", description = "The bot's activity text (e.g. \"playing\"). Live-updatable.",
-            examples = "set activity of {_bot} to \"with Skript\"", since = "5.0.0-a1")
-    public static @Nullable String activity(Bot bot) { return bot.getActivity(); }
+    @Documentation(name = "Bot Activity", description = "The bot's activity. A text is a \"playing\" activity; use the "
+            + "activity expressions (watching, listening, ...) for the other kinds. Live-updatable.",
+            examples = {"set activity of {_bot} to \"with Skript\"", "set activity of {_bot} to watching \"the server\""},
+            since = "5.0.0-a1")
+    public static @Nullable Activity activity(Bot bot) { return bot.getActivity(); }
     @Property.Setter("activity")
-    public static void setActivity(Bot bot, @Nullable String activity) { bot.setActivity(activity); }
+    public static void setActivity(Bot bot, @Nullable Activity activity) { bot.setActivity(activity); }
 
     @Property(value = "online status", shared = true)
     public static @Nullable OnlineStatus onlineStatus(Bot bot) { return bot.getOnlineStatus(); }
