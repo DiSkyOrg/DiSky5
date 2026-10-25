@@ -181,7 +181,8 @@ public final class MemberType {
             since = "5.0.0-a1"
     )
     public static @Nullable AudioChannel voiceChannel(Member m) {
-        return m.getVoiceState().getChannel();
+        GuildVoiceState state = m.getVoiceState();
+        return state == null ? null : state.getChannel();
     }
 
     @Property(value = "online status", shared = true)

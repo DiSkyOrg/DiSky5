@@ -1,7 +1,7 @@
 plugins {
     id 'java-library'
     id 'xyz.jpenilla.run-paper' version '3.0.2'
-    id 'com.gradleup.shadow' version '8.3.5'
+    id 'com.gradleup.shadow' version '9.2.2'
 }
 
 repositories {
@@ -67,7 +67,19 @@ tasks.named('processResources') {
 
 tasks.named('shadowJar') {
     archiveClassifier.set('')
-    // Relocate JDA's bundled deps to avoid clashes inside the server JVM.
+    // JDA itself stays put: addons depending on DiSky compile against net.dv8tion.jda. JNA and
+    // opus-java are left alone because they locate their native libraries by package path.
+    def libs = 'net.itsthesky.disky5.libs'
+    [
+        'okhttp3', 'okio', 'kotlin',
+        'com.fasterxml.jackson',
+        'com.neovisionaries.ws',
+        'gnu.trove',
+        'org.apache.commons.collections4',
+        'com.google.crypto.tink', 'com.google.protobuf',
+        'dev.faststats',
+    ].each { pkg -> relocate pkg, "${libs}.${pkg}" }
+    mergeServiceFiles()
 }
 
 // The shaded jar is the artifact, so the thin one must not claim the same file name. Both tasks used

@@ -6,6 +6,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
@@ -50,7 +51,9 @@ public final class BotManager {
     public @Nullable Bot findAny() {
         int size = byManager.size();
         if (size == 0) return null;
-        Bot any = byManager.values().iterator().next();
+        Bot any = byManager.values().stream()
+            .min(Comparator.comparing(Bot::getName, Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)))
+            .orElseThrow();
         if (size > 1)
             LOGGER.warning("Several bots are loaded but none was specified; using '" + any.getName()
                 + "'. Specify the bot explicitly to remove this ambiguity.");

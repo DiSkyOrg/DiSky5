@@ -22,6 +22,25 @@ This branch is **DiSky 5**, a rewrite of DiSky 4. It is in public beta: most of 
 
 DiSky has no config file. At each boot it writes `plugins/DiSky/disky-syntax.json`, a list of every syntax it registered; you don't need to touch it.
 
+### Anonymous statistics (FastStats)
+
+DiSky reports anonymous usage statistics and errors to [FastStats](https://faststats.dev/info). Nothing is sent during the first start: submission begins after the next restart, so you can opt out beforehand.
+
+What is sent:
+
+- **Usage**: a random server id (regenerated if you delete it), the DiSky version, the Minecraft version, the server software and its version, online mode, the player count, the Java vendor and version, the OS name, version and architecture, and the CPU core count.
+- **Errors**: errors raised by DiSky syntaxes at runtime (the exception type, its message truncated to 500 characters and a shortened stack trace).
+
+No IP address, player data, bot token, Discord content or script source is collected.
+
+To opt out, edit `plugins/faststats/config.properties` (shared by every plugin that uses FastStats) and restart:
+
+- `enabled=false` turns FastStats off entirely;
+- `submitMetrics=false` stops usage statistics only;
+- `submitErrors=false` stops error reports only.
+
+The JVM flag `-Dfaststats.enabled=false` also turns it off.
+
 ## A first bot
 
 Save this as `plugins/Skript/scripts/bot.sk`, put your token in it, and run `/sk reload bot`:
