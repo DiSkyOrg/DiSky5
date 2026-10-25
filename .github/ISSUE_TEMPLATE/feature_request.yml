@@ -1,0 +1,50 @@
+name: Feature request
+description: A syntax or a Discord feature DiSky does not cover yet.
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Check the [Atlas](https://atlas.disky.me) first: the feature may already exist under another
+        name. If it existed in DiSky 4, the [migration guide](https://atlas.disky.me/docs/migration)
+        lists what V5 does not have yet.
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before opening
+      options:
+        - label: I searched the Atlas and the existing issues, and this is not covered yet.
+          required: true
+
+  - type: textarea
+    id: need
+    attributes:
+      label: What you want to do
+      description: The problem you are trying to solve in your bot, not only the syntax you have in mind.
+    validations:
+      required: true
+
+  - type: textarea
+    id: syntax
+    attributes:
+      label: Suggested syntax
+      description: How you would like to write it in a script, if you have an idea.
+      render: applescript
+
+  - type: dropdown
+    id: v4
+    attributes:
+      label: Was it in DiSky 4?
+      options:
+        - "No, it is new"
+        - "Yes, and V5 has no equivalent"
+        - "I don't know"
+    validations:
+      required: true
+
+  - type: input
+    id: discord-docs
+    attributes:
+      label: Discord or JDA reference
+      description: A link to the Discord API docs or the JDA method behind the feature, if you know it.

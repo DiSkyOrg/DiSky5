@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Syntax reference and guides
+    url: https://atlas.disky.me
+    about: Every DiSky 5 syntax, with examples, and the hand-written guides.
+  - name: Porting a DiSky 4 script
+    url: https://atlas.disky.me/docs/migration
+    about: What changed between V4 and V5, with before/after examples.

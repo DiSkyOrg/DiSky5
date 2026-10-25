@@ -1,0 +1,95 @@
+name: Bug report
+description: Something DiSky does wrong, or an error it should not print.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report this. Porting a DiSky 4 script? Check the
+        [migration guide](https://atlas.disky.me/docs/migration) first: many V4 lines are written
+        differently in V5 and fail to parse on purpose.
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before opening
+      options:
+        - label: I am on the latest DiSky 5 build.
+          required: true
+        - label: I searched the existing issues and this one is not reported yet.
+          required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened
+      description: What you expected, and what DiSky did instead.
+    validations:
+      required: true
+
+  - type: textarea
+    id: script
+    attributes:
+      label: Script
+      description: The smallest script that reproduces the problem. Remove your bot token.
+      render: applescript
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: What to do on Discord or in game to trigger it.
+      placeholder: |
+        1. Load the script
+        2. Type !ping in a text channel
+        3. ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: console
+    attributes:
+      label: Console output
+      description: The full console output from the server start or the reload, including every error. Remove your bot token.
+      render: text
+    validations:
+      required: true
+
+  - type: input
+    id: disky
+    attributes:
+      label: DiSky version
+      placeholder: 5.0.0-b1
+    validations:
+      required: true
+
+  - type: input
+    id: skript
+    attributes:
+      label: Skript version
+      placeholder: 2.16.1
+    validations:
+      required: true
+
+  - type: input
+    id: server
+    attributes:
+      label: Server software and version
+      description: Output of `/version`.
+      placeholder: Paper 1.21.10-129
+    validations:
+      required: true
+
+  - type: input
+    id: java
+    attributes:
+      label: Java version
+      placeholder: "21"
+
+  - type: textarea
+    id: addons
+    attributes:
+      label: Other Skript addons
+      description: The other addons installed, with their versions. Conflicts between addons are a common cause.
