@@ -129,6 +129,8 @@ DiSky 5 replaces DiSky 4: same plugin name, same Modrinth page, and addons that 
 - Some properties take a `discord` prefix where Skript already uses the word: `discord content`, `discord author`, `discord permissions`...
 - `define bot` still works, but `a new discord bot` + `login` is the recommended way.
 
+The full guide, with before/after examples and the list of what DiSky 5 no longer has, is on the Atlas: [Coming from DiSky 4](https://atlas.disky.me/docs/migration).
+
 ## Building from source
 
 ```bash
