@@ -4,6 +4,7 @@ import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.entities.automod.AutoModResponse;
 import net.dv8tion.jda.api.entities.channel.Channel;
+import net.dv8tion.jda.api.entities.automod.AutoModExecution;
 import net.dv8tion.jda.api.events.automod.AutoModExecutionEvent;
 import net.itsthesky.disky5.annotations.docs.Documentation;
 import net.itsthesky.disky5.annotations.events.EventValue;
@@ -46,7 +47,7 @@ public final class EvtAutoModExecution {
     }
 
     @EventValue
-    public static AutoModExecutionEvent execution(AutoModExecutionEvent event) {
+    public static AutoModExecution execution(AutoModExecutionEvent event) {
         return event;
     }
 

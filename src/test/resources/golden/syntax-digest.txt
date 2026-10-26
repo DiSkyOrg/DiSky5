@@ -192,7 +192,7 @@ event-value event-application-command-cooldown | name=member | type=member | tim
 event-value event-application-command-cooldown | name=user | type=user | time=present
 event-value event-automod-execution | name=bot | type=bot | time=present
 event-value event-automod-execution | name=channel | type=channel | time=present
-event-value event-automod-execution | name=execution | type=automodexecutionevent | time=present
+event-value event-automod-execution | name=execution | type=automod | time=present
 event-value event-automod-execution | name=guild | type=guild | time=present
 event-value event-automod-execution | name=response | type=automodresponse | time=present
 event-value event-automod-execution | name=user | type=user | time=present
