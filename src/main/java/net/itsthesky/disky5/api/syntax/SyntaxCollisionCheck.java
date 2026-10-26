@@ -2,6 +2,7 @@ package net.itsthesky.disky5.api.syntax;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.lang.ExpressionInfo;
+import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.SyntaxElementInfo;
 import org.bukkit.Bukkit;
 
@@ -24,6 +25,15 @@ public final class SyntaxCollisionCheck {
     private static final char SLOT = '\0';
 
     public static void run() {
+        // A diagnostic: whatever another addon registered, it must never stop DiSky from enabling.
+        try {
+            check();
+        } catch (Throwable t) {
+            Bukkit.getLogger().warning("[DiSky] Skipped the syntax collision check: " + t);
+        }
+    }
+
+    private static void check() {
         List<Entry> registry = new ArrayList<>();
         for (SyntaxElementInfo<?> info : Skript.getEffects())    collect(registry, info, 1);
         for (SyntaxElementInfo<?> info : Skript.getConditions()) collect(registry, info, 1);
@@ -31,7 +41,9 @@ public final class SyntaxCollisionCheck {
         Iterator<ExpressionInfo<?, ?>> expressions = Skript.getExpressions();
         while (expressions.hasNext()) {
             ExpressionInfo<?, ?> info = expressions.next();
-            collect(registry, info, info.getExpressionType().ordinal());
+            // Expressions registered through Skript's newer registration API can carry no type.
+            ExpressionType type = info.getExpressionType();
+            collect(registry, info, type == null ? ExpressionType.values().length : type.ordinal());
         }
 
         Map<String, Entry> owners = new LinkedHashMap<>();
