@@ -7,7 +7,8 @@ body:
       value: |
         Thanks for taking the time to report this. Porting a DiSky 4 script? Check the
         [migration guide](https://atlas.disky.me/docs/migration) first: many V4 lines are written
-        differently in V5 and fail to parse on purpose.
+        differently in V5 and fail to parse on purpose. Not sure it is a bug, or need help with a
+        script? Ask on the [DiSky Discord](https://disky.me/discord) first.
 
   - type: checkboxes
     id: checks

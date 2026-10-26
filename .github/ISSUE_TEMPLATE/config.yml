@@ -1,5 +1,8 @@
 blank_issues_enabled: false
 contact_links:
+  - name: Questions and help with a script
+    url: https://disky.me/discord
+    about: Ask on the DiSky Discord server; issues are for bugs and feature requests.
   - name: Syntax reference and guides
     url: https://atlas.disky.me
     about: Every DiSky 5 syntax, with examples, and the hand-written guides.
